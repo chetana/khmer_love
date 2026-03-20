@@ -216,15 +216,39 @@ export default function App() {
           <div className="p-2 bg-rose-100 rounded-full">
             <MessageSquareHeart className="text-rose-500 w-5 h-5" />
           </div>
-          <h1 className="serif-text text-2xl font-bold text-stone-800">Bong & Oun</h1>
+          <h1 className="serif-text text-xl font-bold text-stone-800 hidden sm:block">Bong & Oun</h1>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setMode(mode === 'BONG_TO_OUN' ? 'OUN_TO_BONG' : 'BONG_TO_OUN')}
-            className="px-4 py-2 bg-white border border-stone-200 rounded-full text-[10px] font-bold uppercase tracking-widest text-stone-500 flex items-center gap-2 hover:border-rose-200 transition-all"
-          >
-            {mode === 'BONG_TO_OUN' ? <><User className="w-3 h-3" /> Bong → Oun</> : <><HeartHandshake className="w-3 h-3" /> Oun → Bong</>}
-          </button>
+        
+        {/* New Visual Toggle Switch */}
+        <div 
+          onClick={() => {
+            setMode(mode === 'BONG_TO_OUN' ? 'OUN_TO_BONG' : 'BONG_TO_OUN');
+            setResult(null);
+            setInputText('');
+          }}
+          className="relative flex items-center bg-stone-100 p-1 rounded-full cursor-pointer select-none w-48 h-10 border border-stone-200/50"
+        >
+          <motion.div 
+            className="absolute h-8 bg-white rounded-full shadow-sm"
+            initial={false}
+            animate={{ 
+              x: mode === 'BONG_TO_OUN' ? 0 : 88,
+              width: 96
+            }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+          <div className={cn(
+            "relative z-10 w-1/2 text-center text-[9px] font-black uppercase tracking-widest transition-colors duration-200 flex items-center justify-center gap-1",
+            mode === 'BONG_TO_OUN' ? "text-rose-500" : "text-stone-400"
+          )}>
+            <User className="w-3 h-3" /> Bong
+          </div>
+          <div className={cn(
+            "relative z-10 w-1/2 text-center text-[9px] font-black uppercase tracking-widest transition-colors duration-200 flex items-center justify-center gap-1",
+            mode === 'OUN_TO_BONG' ? "text-rose-500" : "text-stone-400"
+          )}>
+            Oun <HeartHandshake className="w-3 h-3" />
+          </div>
         </div>
       </header>
 
@@ -240,6 +264,18 @@ export default function App() {
               {/* Input Card */}
               <div className="bg-white rounded-[32px] p-6 shadow-sm border border-stone-100 space-y-4">
                 <div className="relative">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2 px-1">
+                    {["❤️", "💖", "🥰", "😘", "😍", "🌹", "✨", "🙏", "😊", "🌙"].map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => setInputText(prev => prev + emoji)}
+                        className="text-xl hover:scale-125 transition-transform active:scale-95 p-1"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
@@ -249,6 +285,7 @@ export default function App() {
                       mode === 'OUN_TO_BONG' && "khmer-text"
                     )}
                   />
+                </div>
                   <div className="absolute bottom-0 right-0 flex gap-2">
                     <button 
                       onClick={() => fileInputRef.current?.click()}
@@ -287,14 +324,38 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center gap-4">
-                      <button onClick={() => speak(result.translatedText, mode === 'BONG_TO_OUN' ? 'kh' : 'fr')} className="p-4 bg-rose-50 text-rose-500 rounded-full hover:bg-rose-100 transition-all">
+                    <div className="flex justify-center gap-3 flex-wrap">
+                      <button onClick={() => speak(result.translatedText, mode === 'BONG_TO_OUN' ? 'kh' : 'fr')} className="p-4 bg-rose-50 text-rose-500 rounded-full hover:bg-rose-100 transition-all" title="Écouter">
                         <Volume2 className={cn("w-6 h-6", isSpeaking && "animate-pulse")} />
                       </button>
+                      
+                      <button 
+                        onClick={() => copyToClipboard('single')} 
+                        className={cn(
+                          "p-4 rounded-full transition-all flex items-center gap-2",
+                          copied === 'single' ? "bg-green-50 text-green-500" : "bg-stone-50 text-stone-400 hover:bg-stone-100"
+                        )}
+                        title="Copier la traduction"
+                      >
+                        {copied === 'single' ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                      </button>
+
+                      <button 
+                        onClick={() => copyToClipboard('both')} 
+                        className={cn(
+                          "p-4 rounded-full transition-all flex items-center gap-2",
+                          copied === 'both' ? "bg-rose-100 text-rose-600" : "bg-rose-50 text-rose-400 hover:bg-rose-100"
+                        )}
+                        title="Copier Source + Traduction"
+                      >
+                        {copied === 'both' ? <Check className="w-6 h-6" /> : <ArrowRightLeft className="w-6 h-6" />}
+                      </button>
+
                       <button onClick={() => toggleFavorite(result)} className={cn("p-4 rounded-full transition-all", favorites.find(f => f.translatedText === result.translatedText) ? "bg-amber-50 text-amber-500" : "bg-stone-50 text-stone-400")}>
                         <Star className={cn("w-6 h-6", favorites.find(f => f.translatedText === result.translatedText) && "fill-current")} />
                       </button>
-                      <button onClick={() => share(result)} className="p-4 bg-stone-50 text-stone-400 rounded-full hover:bg-stone-100 transition-all">
+                      
+                      <button onClick={() => share(result)} className="p-4 bg-stone-50 text-stone-400 rounded-full hover:bg-stone-100 transition-all" title="Partager">
                         <Share2 className="w-6 h-6" />
                       </button>
                     </div>
@@ -311,9 +372,46 @@ export default function App() {
               <div className="space-y-3">
                 <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400 px-2">Phrases rapides</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(mode === 'BONG_TO_OUN' ? ["Tu me manques", "Je t'aime", "Tu as mangé ?", "Bonne nuit"] : ["Oun nirk Bong", "Oun srolanh Bong", "Nham bay nov?"]).map((p, i) => (
-                    <button key={i} onClick={() => setInputText(p)} className="px-4 py-2 bg-white border border-stone-200 rounded-full text-sm text-stone-600 hover:border-rose-200 transition-all">
-                      {p}
+                  {(mode === 'BONG_TO_OUN' 
+                    ? [
+                        { text: "Tu me manques", phon: "បងនឹកអូន" }, 
+                        { text: "Je t'aime", phon: "បងស្រឡាញ់អូន" }, 
+                        { text: "Tu as mangé ?", phon: "ញ៉ាំបាយនៅ?" }, 
+                        { text: "Bonne nuit", phon: "រាត្រីសួស្តី" },
+                        { text: "Bonjour", phon: "អរុណសួស្តី" },
+                        { text: "Prends soin de toi", phon: "ថែរក្សាខ្លួនផង" },
+                        { text: "Je suis fier de toi", phon: "បងមានមោទនភាពចំពោះអូន" },
+                        { text: "Tu es magnifique", phon: "អូនស្អាតណាស់" },
+                        { text: "À bientôt", phon: "ជួបគ្នាឆាប់ៗ" },
+                        { text: "Fais de beaux rêves", phon: "យល់សប្តិល្អ" }
+                      ] 
+                    : [
+                        { text: "អូននឹកបង", phon: "Oun nirk Bong" }, 
+                        { text: "អូនស្រឡាញ់បង", phon: "Oun srolanh Bong" }, 
+                        { text: "ញ៉ាំបាយនៅ?", phon: "Nham bay nov?" },
+                        { text: "រាត្រីសួស្តី", phon: "Reatrey sour sdei" },
+                        { text: "អរុណសួស្តី", phon: "Arun sour sdei" },
+                        { text: "ថែរក្សាខ្លួនផង", phon: "Thae raksa kloun pong" },
+                        { text: "អូនមានមោទនភាពចំពោះបង", phon: "Oun mean motonakpheap chompos Bong" },
+                        { text: "បងសង្ហាណាស់", phon: "Bong sangha nas" },
+                        { text: "ជួបគ្នាឆាប់ៗ", phon: "Choub knia chab chab" },
+                        { text: "យល់សប្តិល្អ", phon: "Yol sop l'or" }
+                      ]
+                  ).map((p, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setInputText(p.text)} 
+                      className="px-4 py-2 bg-white border border-stone-200 rounded-2xl text-stone-600 hover:border-rose-200 transition-all flex flex-col items-center min-w-[100px]"
+                    >
+                      <span className={cn("text-sm", mode === 'OUN_TO_BONG' && "khmer-text text-lg")}>{p.text}</span>
+                      {p.phon && (
+                        <span className={cn(
+                          "text-[9px] text-stone-400 leading-tight",
+                          mode === 'BONG_TO_OUN' ? "khmer-text" : "italic"
+                        )}>
+                          {p.phon}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
