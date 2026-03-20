@@ -1,5 +1,5 @@
 {
   "name": "Khmer Love Translator",
   "description": "Un traducteur spécialisé du Français vers le Khmer, optimisé pour les conversations romantiques respectant les nuances culturelles et d'âge (Bong/Oun).",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["camera"]
 }
