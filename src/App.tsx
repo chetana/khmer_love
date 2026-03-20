@@ -153,27 +153,74 @@ export default function App() {
   };
 
   const speak = async (text: string, lang: 'kh' | 'fr') => {
-    if (isSpeaking) return;
+    if (isSpeaking || !text) return;
     setIsSpeaking(true);
     try {
+      // Clean text from emojis for better TTS
+      const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+      
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: `Prononce ceci de manière naturelle et douce : ${text}` }] }],
+        contents: [{ parts: [{ text: `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}` }] }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' } }
+            voiceConfig: { 
+              prebuiltVoiceConfig: { 
+                voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' 
+              } 
+            }
           }
         }
       });
+      
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
-        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-        audio.onended = () => setIsSpeaking(false);
+        // The model returns raw PCM 24kHz. We wrap it in a WAV header to play it.
+        const audioData = atob(base64Audio);
+        const arrayBuffer = new ArrayBuffer(audioData.length);
+        const view = new Uint8Array(arrayBuffer);
+        for (let i = 0; i < audioData.length; i++) {
+          view[i] = audioData.charCodeAt(i);
+        }
+        
+        const wavHeader = new ArrayBuffer(44);
+        const wavView = new DataView(wavHeader);
+        const sampleRate = 24000;
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        
+        wavView.setUint32(0, 0x52494646, false); // "RIFF"
+        wavView.setUint32(4, 36 + audioData.length, true);
+        wavView.setUint32(8, 0x57415645, false); // "WAVE"
+        wavView.setUint32(12, 0x666d7420, false); // "fmt "
+        wavView.setUint32(16, 16, true);
+        wavView.setUint16(20, 1, true); // PCM
+        wavView.setUint16(22, numChannels, true);
+        wavView.setUint32(24, sampleRate, true);
+        wavView.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true);
+        wavView.setUint16(32, numChannels * bitsPerSample / 8, true);
+        wavView.setUint16(34, bitsPerSample, true);
+        wavView.setUint32(36, 0x64617461, false); // "data"
+        wavView.setUint32(40, audioData.length, true);
+        
+        const blob = new Blob([wavHeader, arrayBuffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(url);
+        };
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(url);
+        };
         audio.play();
+      } else {
+        setIsSpeaking(false);
       }
     } catch (e) {
-      console.error(e);
+      console.error("TTS Error:", e);
       setIsSpeaking(false);
     }
   };
