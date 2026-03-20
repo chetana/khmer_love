@@ -199,7 +199,13 @@ export default function App() {
   };
 
   const share = async (res: TranslationResult) => {
-    const text = `${res.originalText}\n---\n${res.translatedText}`;
+    const isBong = mode === 'BONG_TO_OUN';
+    const frFlag = "🇫🇷 ";
+    const khFlag = "🇰🇭 ";
+    const sourceWithFlag = (isBong ? frFlag : khFlag) + res.originalText;
+    const targetWithFlag = (isBong ? khFlag : frFlag) + res.translatedText;
+    const text = `${sourceWithFlag}\n---\n${targetWithFlag}`;
+    
     if (navigator.share) {
       try {
         await navigator.share({ text });
@@ -211,8 +217,20 @@ export default function App() {
 
   const copyToClipboard = (type: 'single' | 'both') => {
     if (!result) return;
-    let textToCopy = result.translatedText;
-    if (type === 'both') textToCopy = `${result.originalText}\n---\n${result.translatedText}`;
+    const isBong = mode === 'BONG_TO_OUN';
+    const frFlag = "🇫🇷 ";
+    const khFlag = "🇰🇭 ";
+    
+    let textToCopy = "";
+    
+    if (type === 'single') {
+      textToCopy = (isBong ? khFlag : frFlag) + result.translatedText;
+    } else {
+      const sourceWithFlag = (isBong ? frFlag : khFlag) + result.originalText;
+      const targetWithFlag = (isBong ? khFlag : frFlag) + result.translatedText;
+      textToCopy = `${sourceWithFlag}\n---\n${targetWithFlag}`;
+    }
+
     navigator.clipboard.writeText(textToCopy);
     setCopied(type);
     setTimeout(() => setCopied(null), 2000);
