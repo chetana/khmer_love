@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-khmer: "Kantumruy Pro", sans-serif;
+  --font-serif: "Libre Baskerville", serif;
+}
+
+body {
+  @apply bg-[#fdfcf8] text-[#2c2c2c] font-sans;
+}
+
+.khmer-text {
+  font-family: var(--font-khmer);
+}
+
+.serif-text {
+  font-family: var(--font-serif);
+}
