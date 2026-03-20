@@ -27,7 +27,10 @@ import {
   Lightbulb,
   X,
   ChevronRight,
-  Play
+  Play,
+  Laugh,
+  Coffee,
+  Sun
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -57,6 +60,7 @@ export default function App() {
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [tone, setTone] = useState<'sweet' | 'funny' | 'daily'>('sweet');
   const [copied, setCopied] = useState<'single' | 'both' | null>(null);
   const [favorites, setFavorites] = useState<TranslationResult[]>(() => {
     const saved = localStorage.getItem('khmer_favorites');
@@ -107,13 +111,19 @@ export default function App() {
     setIsLoading(true);
     try {
       const isBong = mode === 'BONG_TO_OUN';
+      const tonePrompt = {
+        sweet: "Utilise un ton très doux, romantique et affectueux (mots doux, expressions tendres).",
+        funny: "Utilise un ton drôle, taquin et léger (pour se faire rire mutuellement).",
+        daily: "Utilise un ton simple, pratique et quotidien (pour les choses de la vie de tous les jours)."
+      }[tone];
+
       const prompt = isBong 
         ? `Traduis cette phrase ou analyse cette image du français vers le khmer pour ma petite amie au Cambodge. 
            CONTEXTE : Je suis un homme plus âgé (Bong), elle est plus jeune (Oun). 
-           Utilise un ton affectueux et naturel.`
+           ${tonePrompt}`
         : `Traduis cette phrase ou analyse cette image du khmer vers le français pour mon petit ami français. 
            CONTEXTE : Je suis une femme plus jeune (Oun), il est plus âgé (Bong). 
-           Garde le ton affectueux et respectueux.`;
+           ${tonePrompt}`;
 
       const contents: any[] = [{ text: `${prompt}\n\nTexte/Image à traduire : "${textToTranslate}"\n\nRéponds UNIQUEMENT au format JSON : { "translatedText", "phonetic", "explanation", "originalText" }` }];
       
@@ -261,8 +271,60 @@ export default function App() {
               initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
               className="space-y-6"
             >
+              {/* Word of the Day */}
+              {wordOfTheDay && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-[32px] p-6 border border-rose-100 shadow-sm relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Heart className="w-24 h-24 text-rose-500 rotate-12" />
+                  </div>
+                  <div className="relative z-10 space-y-3">
+                    <div className="flex items-center gap-2 text-rose-500 font-bold text-[10px] uppercase tracking-widest">
+                      <Sun className="w-3 h-3" /> Mot doux du jour
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <p className="khmer-text text-3xl text-stone-800">{wordOfTheDay.kh}</p>
+                        <p className="text-xs text-stone-400 italic">{wordOfTheDay.phon}</p>
+                        <p className="serif-text text-lg text-stone-600">{wordOfTheDay.fr}</p>
+                      </div>
+                      <button 
+                        onClick={() => speak(wordOfTheDay.kh, 'kh')}
+                        className="p-3 bg-white/80 backdrop-blur-sm text-rose-500 rounded-full hover:bg-white transition-all shadow-sm"
+                      >
+                        <Volume2 className={cn("w-5 h-5", isSpeaking && "animate-pulse")} />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Input Card */}
               <div className="bg-white rounded-[32px] p-6 shadow-sm border border-stone-100 space-y-4">
+                {/* Tone Selector */}
+                <div className="flex gap-2 p-1 bg-stone-50 rounded-2xl">
+                  {[
+                    { id: 'sweet', label: 'Doux', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100' },
+                    { id: 'funny', label: 'Drôle', icon: Laugh, color: 'text-amber-500', bg: 'bg-amber-100' },
+                    { id: 'daily', label: 'Quotidien', icon: Coffee, color: 'text-blue-500', bg: 'bg-blue-100' }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTone(t.id as any)}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all",
+                        tone === t.id ? cn(t.bg, t.color) : "text-stone-400 hover:bg-stone-100"
+                      )}
+                    >
+                      <t.icon className="w-3 h-3" />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="relative">
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2 px-1">
