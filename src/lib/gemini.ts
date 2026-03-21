@@ -67,9 +67,11 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
 
   const response = await callGemini('gemini-2.5-flash-preview-tts', {
     contents: [{ parts: [{ text: `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}` }] }],
-    generationConfig: { responseModalities: ['AUDIO'] },
-    speechConfig: {
-      voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' } },
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      speechConfig: {
+        voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' } },
+      },
     },
   });
 
