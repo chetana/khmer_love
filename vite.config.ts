@@ -8,7 +8,9 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // API key is handled server-side via the /gemini-api-proxy route.
+      // The SDK needs a non-empty string to initialize; the real key never reaches the browser bundle.
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || 'proxy'),
     },
     resolve: {
       alias: {

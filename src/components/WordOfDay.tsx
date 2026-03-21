@@ -1,0 +1,42 @@
+import { Heart, Sun, Volume2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import type { WordOfDay } from '../types';
+import { cn } from '../lib/utils';
+
+interface WordOfDayProps {
+  word: WordOfDay;
+  isSpeaking: boolean;
+  onSpeak: () => void;
+}
+
+export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-[32px] p-6 border border-rose-100 shadow-sm relative overflow-hidden group"
+    >
+      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+        <Heart className="w-24 h-24 text-rose-500 rotate-12" />
+      </div>
+      <div className="relative z-10 space-y-3">
+        <div className="flex items-center gap-2 text-rose-500 font-bold text-[10px] uppercase tracking-widest">
+          <Sun className="w-3 h-3" /> Mot doux du jour
+        </div>
+        <div className="flex justify-between items-end">
+          <div className="space-y-1">
+            <p className="khmer-text text-3xl text-stone-800">{word.kh}</p>
+            <p className="text-xs text-stone-400 italic">{word.phon}</p>
+            <p className="serif-text text-lg text-stone-600">{word.fr}</p>
+          </div>
+          <button
+            onClick={onSpeak}
+            className="p-3 bg-white/80 backdrop-blur-sm text-rose-500 rounded-full hover:bg-white transition-all shadow-sm"
+          >
+            <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
