@@ -61,10 +61,19 @@ export function GuideTab() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  const handleInputFocus = () => {
+    // On mobile the browser auto-scrolls to the focused input, hiding the messages.
+    // Wait for the keyboard to finish opening, then scroll the top of the chat into view.
+    setTimeout(() => {
+      chatTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  };
 
   const sendMessage = async (text?: string) => {
     const question = (text ?? chatInput).trim();
@@ -93,7 +102,7 @@ export function GuideTab() {
       <h2 className="serif-text text-2xl font-bold px-2">Guide Culturel</h2>
 
       {/* ── Culture Chat ── */}
-      <section className="space-y-3">
+      <section className="space-y-3" ref={chatTopRef}>
         <div className="flex items-center gap-2 px-2">
           <MessageCircle className="w-4 h-4 text-teal-500" />
           <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
@@ -176,6 +185,7 @@ export function GuideTab() {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
+              onFocus={handleInputFocus}
               placeholder="Pose ta question sur la culture khmère..."
               className="flex-1 bg-stone-50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 placeholder:text-stone-300"
             />
