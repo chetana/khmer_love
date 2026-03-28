@@ -124,10 +124,10 @@ export function FavoritesTab({
                       )}>
                         {entry.source}
                       </p>
-                      <div className="flex items-center gap-1">
-                        <ArrowRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
+                      <div className="flex items-start gap-1 mt-0.5">
+                        <ArrowRight className="w-3 h-3 text-stone-300 flex-shrink-0 mt-1" />
                         <p className={cn(
-                          'truncate font-medium',
+                          'font-medium leading-relaxed',
                           isFrToKh ? 'khmer-text text-lg text-stone-800' : 'text-sm text-stone-700'
                         )}>
                           {entry.target}
