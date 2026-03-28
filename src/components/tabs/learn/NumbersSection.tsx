@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Check, RefreshCw, Trophy } from 'lucide-react';
+import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
 import { NUMBERS } from '../../../data/numbers';
 import type { KhmerNumber } from '../../../data/numbers';
 
@@ -22,7 +22,12 @@ function saveLearned(learned: Set<string>) {
   } catch {}
 }
 
-export function NumbersSection() {
+interface NumbersSectionProps {
+  isSpeaking: boolean;
+  onSpeak: (text: string, lang: 'kh' | 'fr') => void;
+}
+
+export function NumbersSection({ isSpeaking, onSpeak }: NumbersSectionProps) {
   const [learned, setLearned] = useState<Set<string>>(loadLearned);
   const [deck, setDeck] = useState<KhmerNumber[]>(() => {
     const l = loadLearned();
@@ -139,7 +144,16 @@ export function NumbersSection() {
                 >
                   <p className="khmer-text text-5xl text-amber-700 leading-none">{current.digit}</p>
                   <p className="text-5xl font-bold text-stone-800">{current.value}</p>
-                  <p className="text-xl font-mono text-stone-500 italic">{current.phon}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-xl font-mono text-stone-500 italic">{current.phon}</p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onSpeak(current.digit, 'kh'); }}
+                      disabled={isSpeaking}
+                      className="p-2 bg-white/70 rounded-full text-amber-600 hover:bg-white transition-all disabled:opacity-50"
+                    >
+                      {isSpeaking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                  </div>
                   {current.hint && (
                     <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-1">
                       {current.hint}

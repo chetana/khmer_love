@@ -2,6 +2,7 @@
 // The API key stays server-side (Cloud Run env var), never in the JS bundle.
 import type { TranslationResult, WordOfDay, FamilyRelationship, Direction, Tone } from '../types';
 import { buildWavHeader } from './utils';
+import { getAudioCache, setAudioCache } from './audioCache';
 
 async function callGemini(model: string, body: object): Promise<any> {
   const res = await fetch('/api/gemini', {
@@ -65,11 +66,30 @@ export async function translate(
   return JSON.parse(getText(response) || '{}');
 }
 
+function playBase64Pcm(base64Audio: string): Promise<void> {
+  const audioData = atob(base64Audio);
+  const pcmBuffer = new ArrayBuffer(audioData.length);
+  const pcmView = new Uint8Array(pcmBuffer);
+  for (let i = 0; i < audioData.length; i++) pcmView[i] = audioData.charCodeAt(i);
+  const blob = new Blob([buildWavHeader(audioData.length), pcmBuffer], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  return new Promise((resolve, reject) => {
+    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+    audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
+    audio.play().catch(reject);
+  });
+}
+
 export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
   const cleanText = text.replace(
     /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
     ''
-  );
+  ).trim();
+
+  // Serve from cache if available
+  const cached = getAudioCache(cleanText, lang);
+  if (cached) return playBase64Pcm(cached);
 
   const response = await callGemini('gemini-2.5-flash-preview-tts', {
     contents: [{ parts: [{ text: `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}` }] }],
@@ -84,20 +104,8 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
   const base64Audio = response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!base64Audio) throw new Error('No audio data returned');
 
-  const audioData = atob(base64Audio);
-  const pcmBuffer = new ArrayBuffer(audioData.length);
-  const pcmView = new Uint8Array(pcmBuffer);
-  for (let i = 0; i < audioData.length; i++) pcmView[i] = audioData.charCodeAt(i);
-
-  const blob = new Blob([buildWavHeader(audioData.length), pcmBuffer], { type: 'audio/wav' });
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-
-  return new Promise((resolve, reject) => {
-    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-    audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
-    audio.play().catch(reject);
-  });
+  setAudioCache(cleanText, lang, base64Audio);
+  return playBase64Pcm(base64Audio);
 }
 
 export async function generateWordOfDay(force = false): Promise<WordOfDay> {

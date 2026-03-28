@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Check, RefreshCw, Trophy } from 'lucide-react';
+import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
 import { CONSONANTS } from '../../../data/alphabet';
 import type { AlphabetChar } from '../../../data/alphabet';
 
@@ -22,7 +22,12 @@ function saveLearned(learned: Set<string>) {
   } catch {}
 }
 
-export function AlphabetSection() {
+interface AlphabetSectionProps {
+  isSpeaking: boolean;
+  onSpeak: (text: string, lang: 'kh' | 'fr') => void;
+}
+
+export function AlphabetSection({ isSpeaking, onSpeak }: AlphabetSectionProps) {
   const [learned, setLearned] = useState<Set<string>>(loadLearned);
   const [deck, setDeck] = useState<AlphabetChar[]>(() => {
     const l = loadLearned();
@@ -131,7 +136,16 @@ export function AlphabetSection() {
                   className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-3xl p-8 flex flex-col items-center justify-center gap-3 min-h-[200px]"
                 >
                   <p className="khmer-text text-6xl text-teal-700 leading-none">{current.char}</p>
-                  <p className="text-2xl font-bold text-stone-800 font-mono">/{current.phon}/</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-2xl font-bold text-stone-800 font-mono">/{current.phon}/</p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onSpeak(current.example?.kh ?? current.char, 'kh'); }}
+                      disabled={isSpeaking}
+                      className="p-2 bg-white/70 rounded-full text-teal-600 hover:bg-white transition-all disabled:opacity-50"
+                    >
+                      {isSpeaking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                  </div>
                   {current.example && (
                     <div className="bg-white/70 rounded-2xl px-5 py-3 w-full text-center space-y-1 mt-1">
                       <p className="khmer-text text-xl text-stone-700">{current.example.kh}</p>

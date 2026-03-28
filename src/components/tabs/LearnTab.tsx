@@ -152,10 +152,10 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
       )}
 
       {/* Alphabet section */}
-      {section === 'alpha' && <AlphabetSection />}
+      {section === 'alpha' && <AlphabetSection isSpeaking={isSpeaking} onSpeak={onSpeak} />}
 
       {/* Numbers section */}
-      {section === 'numbers' && <NumbersSection />}
+      {section === 'numbers' && <NumbersSection isSpeaking={isSpeaking} onSpeak={onSpeak} />}
 
       {/* Quiz Section — only on vocab */}
       {section === 'vocab' && (
