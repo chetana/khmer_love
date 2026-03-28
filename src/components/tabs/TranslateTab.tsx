@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import {
   Send, Copy, Check, Info, Sparkles, ArrowRightLeft,
-  Volume2, Camera, Images, Star, Share2, MessageSquare, Smile, SlidersHorizontal,
+  Volume2, Loader2, Camera, Images, Star, Share2, MessageSquare, Smile, SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { TranslationResult, FamilyRelationship, Direction, Tone, WordOfDay } from '../../types';
@@ -350,10 +350,14 @@ export function TranslateTab({
                 <div className="flex justify-center gap-3 flex-wrap">
                   <button
                     onClick={() => onSpeak(result.translatedText, 'kh')}
-                    className="p-4 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-100 transition-all"
+                    disabled={isSpeaking}
+                    className="p-4 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-100 transition-all disabled:opacity-60"
                     title="Écouter"
                   >
-                    <Volume2 className={cn('w-6 h-6', isSpeaking && 'animate-pulse')} />
+                    {isSpeaking
+                      ? <Loader2 className="w-6 h-6 animate-spin" />
+                      : <Volume2 className="w-6 h-6" />
+                    }
                   </button>
 
                   <button
@@ -486,9 +490,13 @@ export function TranslateTab({
               <div className="flex justify-center gap-3">
                 <button
                   onClick={() => onSpeak(reverseResult.translatedText, 'fr')}
-                  className="p-3 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-100 transition-all"
+                  disabled={isSpeaking}
+                  className="p-3 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-100 transition-all disabled:opacity-60"
                 >
-                  <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
+                  {isSpeaking
+                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : <Volume2 className="w-5 h-5" />
+                  }
                 </button>
               </div>
               {reverseResult.explanation && (

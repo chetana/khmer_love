@@ -82,6 +82,9 @@ export function RelationshipPicker({ current, onSelect, onClose }: RelationshipP
                   <p className="text-[11px] text-stone-500 mt-1 font-medium khmer-text">
                     {r.speakerPronounKh} → {r.listenerPronounKh}
                   </p>
+                  <p className="text-[9px] text-stone-400 mt-0.5 font-normal">
+                    {r.speakerPronounFr.split(' (')[0]} → {r.listenerPronounFr.split(' (')[0]}
+                  </p>
                 </div>
               </button>
             ))}

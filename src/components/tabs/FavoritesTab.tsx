@@ -1,4 +1,4 @@
-import { Star, Volume2, Clock, ArrowRight } from 'lucide-react';
+import { Star, Volume2, Loader2, Clock, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { TranslationResult, HistoryEntry } from '../../types';
 import { RELATIONSHIPS } from '../../lib/relationships';
@@ -71,12 +71,13 @@ export function FavoritesTab({
               <div className="flex gap-2">
                 <button
                   onClick={() => onSpeak(fav.translatedText, 'kh')}
-                  className={cn(
-                    'p-2 bg-stone-50 rounded-lg text-stone-400 hover:text-teal-600 transition-colors',
-                    isSpeaking && 'opacity-50 cursor-not-allowed'
-                  )}
+                  disabled={isSpeaking}
+                  className="p-2 bg-stone-50 rounded-lg text-stone-400 hover:text-teal-600 transition-colors disabled:opacity-50"
                 >
-                  <Volume2 className="w-4 h-4" />
+                  {isSpeaking
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Volume2 className="w-4 h-4" />
+                  }
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { Heart, Sun, Volume2, RefreshCw } from 'lucide-react';
+import { Heart, Sun, Volume2, RefreshCw, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { WordOfDay } from '../types';
 import { cn } from '../lib/utils';
@@ -34,9 +34,13 @@ export function WordOfDayCard({ word, isSpeaking, isRefreshing, onSpeak, onRefre
           <div className="flex flex-col gap-2">
             <button
               onClick={onSpeak}
-              className="p-3 bg-white/80 backdrop-blur-sm text-teal-600 rounded-full hover:bg-white transition-all shadow-sm"
+              disabled={isSpeaking}
+              className="p-3 bg-white/80 backdrop-blur-sm text-teal-600 rounded-full hover:bg-white transition-all shadow-sm disabled:opacity-60"
             >
-              <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
+              {isSpeaking
+                ? <Loader2 className="w-5 h-5 animate-spin" />
+                : <Volume2 className="w-5 h-5" />
+              }
             </button>
             <button
               onClick={onRefresh}

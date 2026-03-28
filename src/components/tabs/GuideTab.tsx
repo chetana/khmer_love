@@ -233,6 +233,9 @@ export function GuideTab() {
                     <span className="text-stone-300 mx-1">→</span>
                     {r.listenerPronounKh}
                   </p>
+                  <p className="text-[10px] text-stone-400 mt-0.5">
+                    {r.speakerPronounFr.split(' (')[0]} → {r.listenerPronounFr.split(' (')[0]}
+                  </p>
                 </div>
                 <ChevronDown
                   className={cn(

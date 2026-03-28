@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, RotateCcw, ChevronRight, Check, X, Sparkles, Trophy } from 'lucide-react';
+import { Play, Loader2, RotateCcw, ChevronRight, Check, X, Sparkles, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { WordOfDay } from '../../types';
 import { generateFamilyVocab } from '../../lib/gemini';
@@ -141,9 +141,12 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
           <button
             onClick={() => onSpeak(wordOfDay.kh, 'kh')}
             disabled={isSpeaking}
-            className="mt-6 p-4 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all disabled:opacity-50"
+            className="mt-6 p-4 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all disabled:opacity-60"
           >
-            <Play className="w-6 h-6 fill-current" />
+            {isSpeaking
+              ? <Loader2 className="w-6 h-6 animate-spin" />
+              : <Play className="w-6 h-6 fill-current" />
+            }
           </button>
         </div>
       )}
