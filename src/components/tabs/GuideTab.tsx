@@ -92,6 +92,104 @@ export function GuideTab() {
     >
       <h2 className="serif-text text-2xl font-bold px-2">Guide Culturel</h2>
 
+      {/* ── Culture Chat ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-2">
+          <MessageCircle className="w-4 h-4 text-teal-500" />
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
+            Pose-moi une question sur la culture khmère
+          </h3>
+        </div>
+
+        <div className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden">
+          {/* Messages */}
+          {chatMessages.length > 0 && (
+            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+              {chatMessages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+                >
+                  <div
+                    className={cn(
+                      'max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                      msg.role === 'user'
+                        ? 'bg-teal-600 text-white rounded-br-sm'
+                        : 'bg-stone-50 text-stone-700 rounded-bl-sm border border-stone-100'
+                    )}
+                  >
+                    {msg.role === 'assistant' ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-semibold text-stone-800">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                          ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 my-2">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 my-2">{children}</ol>,
+                          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                          h3: ({ children }) => <h3 className="font-bold text-stone-800 mt-3 mb-1">{children}</h3>,
+                          h4: ({ children }) => <h4 className="font-semibold text-stone-700 mt-2 mb-1">{children}</h4>,
+                          code: ({ children }) => <code className="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+                        }}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    ) : msg.text}
+                  </div>
+                </motion.div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-stone-50 border border-stone-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+                    <Sparkles className="w-4 h-4 text-teal-400 animate-spin" />
+                  </div>
+                </div>
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+          )}
+
+          {/* Suggested questions (only if no messages yet) */}
+          {chatMessages.length === 0 && (
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-stone-400 text-center">Questions fréquentes :</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {SUGGESTED_QUESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => sendMessage(q)}
+                    className="text-xs px-3 py-2 bg-stone-50 border border-stone-200 rounded-2xl text-stone-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 transition-all text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="flex gap-2 p-3 border-t border-stone-100">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
+              placeholder="Pose ta question sur la culture khmère..."
+              className="flex-1 bg-stone-50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 placeholder:text-stone-300"
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={!chatInput.trim() || chatLoading}
+              className="p-2.5 bg-teal-600 text-white rounded-full hover:bg-teal-700 disabled:bg-stone-100 disabled:text-stone-300 transition-all flex-shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Relations section */}
       <section className="space-y-3">
         <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400 px-2">
@@ -217,103 +315,6 @@ export function GuideTab() {
         </div>
       </section>
 
-      {/* ── Culture Chat ── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 px-2">
-          <MessageCircle className="w-4 h-4 text-teal-500" />
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
-            Pose une question à Gemini
-          </h3>
-        </div>
-
-        <div className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden">
-          {/* Messages */}
-          {chatMessages.length > 0 && (
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-              {chatMessages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
-                >
-                  <div
-                    className={cn(
-                      'max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
-                      msg.role === 'user'
-                        ? 'bg-teal-600 text-white rounded-br-sm'
-                        : 'bg-stone-50 text-stone-700 rounded-bl-sm border border-stone-100'
-                    )}
-                  >
-                    {msg.role === 'assistant' ? (
-                      <ReactMarkdown
-                        components={{
-                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                          strong: ({ children }) => <strong className="font-semibold text-stone-800">{children}</strong>,
-                          em: ({ children }) => <em className="italic">{children}</em>,
-                          ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 my-2">{children}</ul>,
-                          ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 my-2">{children}</ol>,
-                          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                          h3: ({ children }) => <h3 className="font-bold text-stone-800 mt-3 mb-1">{children}</h3>,
-                          h4: ({ children }) => <h4 className="font-semibold text-stone-700 mt-2 mb-1">{children}</h4>,
-                          code: ({ children }) => <code className="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
-                        }}
-                      >
-                        {msg.text}
-                      </ReactMarkdown>
-                    ) : msg.text}
-                  </div>
-                </motion.div>
-              ))}
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-stone-50 border border-stone-100 px-4 py-3 rounded-2xl rounded-bl-sm">
-                    <Sparkles className="w-4 h-4 text-teal-400 animate-spin" />
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-          )}
-
-          {/* Suggested questions (only if no messages yet) */}
-          {chatMessages.length === 0 && (
-            <div className="p-4 space-y-3">
-              <p className="text-xs text-stone-400 text-center">Questions fréquentes :</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {SUGGESTED_QUESTIONS.map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => sendMessage(q)}
-                    className="text-xs px-3 py-2 bg-stone-50 border border-stone-200 rounded-2xl text-stone-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 transition-all text-left"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="flex gap-2 p-3 border-t border-stone-100">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
-              placeholder="Pose ta question sur la culture khmère..."
-              className="flex-1 bg-stone-50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 placeholder:text-stone-300"
-            />
-            <button
-              onClick={() => sendMessage()}
-              disabled={!chatInput.trim() || chatLoading}
-              className="p-2.5 bg-teal-600 text-white rounded-full hover:bg-teal-700 disabled:bg-stone-100 disabled:text-stone-300 transition-all flex-shrink-0"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
     </motion.div>
   );
 }

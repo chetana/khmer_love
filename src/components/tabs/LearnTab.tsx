@@ -138,7 +138,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
             >
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <p className="text-stone-500 text-sm">
-                Gemini génère 10 expressions de la famille khmère.
+                Je génère 10 expressions de la famille khmère.
                 <br />
                 Tu vois le mot en khmer, trouve la bonne traduction !
               </p>
@@ -161,7 +161,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               className="bg-white rounded-3xl border border-stone-100 shadow-sm p-12 text-center space-y-4"
             >
               <Sparkles className="w-10 h-10 mx-auto text-teal-400 animate-spin" />
-              <p className="text-stone-400 text-sm">Gemini prépare ton quiz...</p>
+              <p className="text-stone-400 text-sm">Je prépare ton quiz...</p>
             </motion.div>
           )}
 
