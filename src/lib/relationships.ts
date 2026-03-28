@@ -246,4 +246,52 @@ export const RELATIONSHIPS: FamilyRelationship[] = [
       "Je t'aime",
     ],
   },
+  {
+    id: 'boyfriend_to_girlfriend',
+    emoji: '💑',
+    labelFr: 'Copain / Copine',
+    speakerFr: 'copain (homme)',
+    listenerFr: 'copine',
+    speakerPronounFr: 'bong (បង)',
+    listenerPronounFr: 'oun (អូន)',
+    speakerPronounKh: 'បង',
+    listenerPronounKh: 'អូន',
+    geminiContext:
+      'Couple romantique khmer. L\'homme se désigne comme "បង" (bong) et appelle sa copine "អូន" (oun). ' +
+      'Ton tendre, affectueux et intime. Utilise des expressions douces et amoureuses.',
+    quickPhrasesFr: [
+      'Tu as mangé ?',
+      'Tu me manques',
+      "Je t'aime",
+      'Bonne nuit',
+      'Je pense à toi',
+      'Tu es belle',
+      'Prends soin de toi',
+      'À tout à l\'heure',
+    ],
+  },
+  {
+    id: 'girlfriend_to_boyfriend',
+    emoji: '💕',
+    labelFr: 'Copine / Copain',
+    speakerFr: 'copine (femme)',
+    listenerFr: 'copain',
+    speakerPronounFr: 'oun (អូន)',
+    listenerPronounFr: 'bong (បង)',
+    speakerPronounKh: 'អូន',
+    listenerPronounKh: 'បង',
+    geminiContext:
+      'Couple romantique khmer. La femme se désigne comme "អូន" (oun) et appelle son copain "បង" (bong). ' +
+      'Ton tendre, affectueux et intime. Utilise des expressions douces et amoureuses.',
+    quickPhrasesFr: [
+      'Tu as mangé ?',
+      'Tu me manques',
+      "Je t'aime",
+      'Bonne nuit',
+      'Je pense à toi',
+      'Tu es beau',
+      'Prends soin de toi',
+      'À tout à l\'heure',
+    ],
+  },
 ];
