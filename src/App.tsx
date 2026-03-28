@@ -5,7 +5,6 @@
 
 import { useState, useEffect } from 'react';
 import { Languages, Star, BookOpen, Lightbulb } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
 
 import type { FamilyRelationship, Direction, Tab } from './types';
 import { RELATIONSHIPS } from './lib/relationships';
@@ -111,42 +110,43 @@ export default function App() {
       />
 
       <main className="flex-1 overflow-y-auto p-4 pb-24">
-        <AnimatePresence mode="wait">
-          {activeTab === 'translate' && (
-            <TranslateTab
-              relationship={relationship}
-              direction={direction}
-              isSpeaking={isSpeaking}
-              isFavorite={isFavorite}
-              wordOfDay={wordOfDay}
-              isRefreshingWord={isRefreshingWord}
-              onSpeak={handleSpeak}
-              onRefreshWord={handleRefreshWord}
-              onToggleFavorite={toggleFavorite}
-              onAddHistory={(source, target, phonetic, explanation) =>
-                addToHistory({ source, target, phonetic, explanation, relationshipId: relationship.id, direction })
-              }
-              onError={showToast}
-            />
-          )}
-          {activeTab === 'favorites' && (
-            <FavoritesTab
-              favorites={favorites}
-              history={history}
-              isSpeaking={isSpeaking}
-              onSpeak={handleSpeak}
-              onToggleFavorite={toggleFavorite}
-            />
-          )}
-          {activeTab === 'learn' && (
-            <LearnTab
-              wordOfDay={wordOfDay}
-              isSpeaking={isSpeaking}
-              onSpeak={handleSpeak}
-            />
-          )}
-          {activeTab === 'guide' && <GuideTab />}
-        </AnimatePresence>
+        {/* Tabs are always mounted to preserve state (chat history, quiz, translation results) */}
+        <div className={activeTab === 'translate' ? undefined : 'hidden'}>
+          <TranslateTab
+            relationship={relationship}
+            direction={direction}
+            isSpeaking={isSpeaking}
+            isFavorite={isFavorite}
+            wordOfDay={wordOfDay}
+            isRefreshingWord={isRefreshingWord}
+            onSpeak={handleSpeak}
+            onRefreshWord={handleRefreshWord}
+            onToggleFavorite={toggleFavorite}
+            onAddHistory={(source, target, phonetic, explanation) =>
+              addToHistory({ source, target, phonetic, explanation, relationshipId: relationship.id, direction })
+            }
+            onError={showToast}
+          />
+        </div>
+        <div className={activeTab === 'favorites' ? undefined : 'hidden'}>
+          <FavoritesTab
+            favorites={favorites}
+            history={history}
+            isSpeaking={isSpeaking}
+            onSpeak={handleSpeak}
+            onToggleFavorite={toggleFavorite}
+          />
+        </div>
+        <div className={activeTab === 'learn' ? undefined : 'hidden'}>
+          <LearnTab
+            wordOfDay={wordOfDay}
+            isSpeaking={isSpeaking}
+            onSpeak={handleSpeak}
+          />
+        </div>
+        <div className={activeTab === 'guide' ? undefined : 'hidden'}>
+          <GuideTab />
+        </div>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/80 backdrop-blur-xl border-t border-stone-100 px-6 py-4 flex justify-between items-center z-40">
