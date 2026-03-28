@@ -158,7 +158,7 @@ export default function App() {
           active={activeTab === 'favorites'}
           onClick={() => setActiveTab('favorites')}
           icon={<Star className="w-6 h-6" />}
-          label="Favoris"
+          label="Historique"
         />
         <NavButton
           active={activeTab === 'learn'}
