@@ -68,6 +68,9 @@ export function TranslateTab({
   const [reverseText, setReverseText] = useState('');
   const [reverseResult, setReverseResult] = useState<TranslationResult | null>(null);
   const [reverseLoading, setReverseLoading] = useState(false);
+  const [reversePendingImage, setReversePendingImage] = useState<string | null>(null);
+  const reverseGalleryInputRef = useRef<HTMLInputElement>(null);
+  const reverseCameraInputRef = useRef<HTMLInputElement>(null);
 
   const isFrToKh = direction === 'FR_TO_KH';
 
@@ -89,18 +92,28 @@ export function TranslateTab({
   };
 
   const handleReverseTranslate = async () => {
-    if (!reverseText.trim()) return;
+    if (!reverseText.trim() && !reversePendingImage) return;
     setReverseLoading(true);
     try {
-      const data = await translate(reverseText, relationship, 'KH_TO_FR', 'daily');
+      const data = await translate(reverseText, relationship, 'KH_TO_FR', 'daily', reversePendingImage ?? undefined);
       setReverseResult(data);
-      onAddHistory(reverseText, data.translatedText, data.phonetic, data.explanation);
+      setReversePendingImage(null);
+      onAddHistory(reverseText || 'Image', data.translatedText, data.phonetic, data.explanation);
     } catch (e) {
       console.error(e);
       onError('Erreur de traduction. Vérifie ta connexion.');
     } finally {
       setReverseLoading(false);
     }
+  };
+
+  const handleReverseImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setReversePendingImage(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +157,7 @@ export function TranslateTab({
     setInputText('');
     setReverseText('');
     setReverseResult(null);
+    setReversePendingImage(null);
     setPrevRelId(relationship.id);
     setPrevDir(direction);
   }
@@ -404,19 +418,46 @@ export function TranslateTab({
         </div>
 
         <div className="bg-white rounded-[32px] p-6 shadow-sm border border-stone-100 space-y-4">
+          <AnimatePresence>
+            {reversePendingImage && (
+              <ImagePreview src={reversePendingImage} onRemove={() => setReversePendingImage(null)} />
+            )}
+          </AnimatePresence>
+
           <textarea
             value={reverseText}
             onChange={(e) => setReverseText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleReverseTranslate();
             }}
-            placeholder={`Colle ici ce que ${relationship.listenerPronounFr} t'a écrit en khmer...`}
+            placeholder={`Colle le texte khmer, ou prends une photo du message reçu...`}
             className="khmer-text w-full h-24 p-0 bg-transparent border-none focus:ring-0 text-xl transition-all placeholder:text-stone-300 resize-none"
           />
-          <div className="flex justify-end">
+
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <button
+                onClick={() => reverseGalleryInputRef.current?.click()}
+                className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-teal-50 hover:text-teal-600 transition-all"
+                title="Galerie photo"
+              >
+                <Images className="w-5 h-5" />
+              </button>
+              <input type="file" ref={reverseGalleryInputRef} onChange={handleReverseImageSelect} accept="image/*" className="hidden" />
+
+              <button
+                onClick={() => reverseCameraInputRef.current?.click()}
+                className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-teal-50 hover:text-teal-600 transition-all"
+                title="Prendre une photo"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
+              <input type="file" ref={reverseCameraInputRef} onChange={handleReverseImageSelect} accept="image/*" capture="environment" className="hidden" />
+            </div>
+
             <button
               onClick={handleReverseTranslate}
-              disabled={reverseLoading || !reverseText.trim()}
+              disabled={reverseLoading || (!reverseText.trim() && !reversePendingImage)}
               className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-full hover:bg-teal-700 shadow-sm disabled:bg-stone-100 disabled:text-stone-300 transition-all flex items-center gap-2"
             >
               {reverseLoading
