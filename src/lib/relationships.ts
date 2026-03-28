@@ -1,0 +1,249 @@
+import type { FamilyRelationship } from '../types';
+
+export const RELATIONSHIPS: FamilyRelationship[] = [
+  {
+    id: 'grandchild_grandpa',
+    emoji: '👴',
+    labelFr: 'Petit-enfant / Grand-père',
+    speakerFr: 'petit-enfant',
+    listenerFr: 'grand-père',
+    speakerPronounFr: 'cheut (ចៅ)',
+    listenerPronounFr: 'ta (តា)',
+    speakerPronounKh: 'ចៅ',
+    listenerPronounKh: 'តា',
+    geminiContext:
+      'Relation grand-père / petit-enfant. Ton très respectueux et affectueux. ' +
+      'Le petit-enfant se désigne comme "ចៅ" (cheut) et appelle son grand-père "តា" (ta). ' +
+      'Le grand-père appelle son petit-enfant "ចៅ" (cheut).',
+    quickPhrasesFr: [
+      'Comment tu vas ta ?',
+      'Tu as bien mangé ?',
+      'Tu as bien dormi ?',
+      'Je pense à toi',
+      'Prends soin de toi',
+      'Tu me manques',
+      'Bonne nuit',
+      "Je t'aime",
+    ],
+  },
+  {
+    id: 'grandchild_grandma',
+    emoji: '👵',
+    labelFr: 'Petit-enfant / Grand-mère',
+    speakerFr: 'petit-enfant',
+    listenerFr: 'grand-mère',
+    speakerPronounFr: 'cheut (ចៅ)',
+    listenerPronounFr: 'yeay (យាយ)',
+    speakerPronounKh: 'ចៅ',
+    listenerPronounKh: 'យាយ',
+    geminiContext:
+      'Relation grand-mère / petit-enfant. Ton très respectueux, chaleureux et affectueux. ' +
+      'Le petit-enfant se désigne comme "ចៅ" (cheut) et appelle sa grand-mère "យាយ" (yeay). ' +
+      'La grand-mère appelle son petit-enfant "ចៅ" (cheut).',
+    quickPhrasesFr: [
+      'Comment tu vas yeay ?',
+      'Tu as bien mangé ?',
+      'Tu as bien dormi ?',
+      'Je pense à toi',
+      'Prends soin de toi',
+      'Tu me manques',
+      'Bonne nuit',
+      "Je t'aime",
+    ],
+  },
+  {
+    id: 'child_father',
+    emoji: '👨',
+    labelFr: 'Enfant / Père',
+    speakerFr: 'enfant',
+    listenerFr: 'père',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'pa (ប៉ា)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'ប៉ា',
+    geminiContext:
+      "Relation père / enfant. Ton respectueux et affectueux. L'enfant se désigne comme " +
+      '"ខ្លួន" (khloun) et appelle son père "ប៉ា" (pa). Le père appelle son enfant "koun" (កូន).',
+    quickPhrasesFr: [
+      'Comment tu vas pa ?',
+      'Tu as bien mangé ?',
+      "Je t'aime",
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+    ],
+  },
+  {
+    id: 'child_mother',
+    emoji: '👩',
+    labelFr: 'Enfant / Mère',
+    speakerFr: 'enfant',
+    listenerFr: 'mère',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'mae (ម៉ាក់)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'ម៉ាក់',
+    geminiContext:
+      'Relation mère / enfant. Ton très affectueux, chaleureux. ' +
+      "L'enfant se désigne comme \"ខ្លួន\" (khloun) et appelle sa mère \"ម៉ាក់\" (mae). " +
+      'La mère appelle son enfant "koun" (កូន).',
+    quickPhrasesFr: [
+      'Comment tu vas mae ?',
+      'Tu as bien mangé ?',
+      "Je t'aime",
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+    ],
+  },
+  {
+    id: 'younger_older_brother',
+    emoji: '👦',
+    labelFr: 'Plus jeune / Frère aîné',
+    speakerFr: 'plus jeune',
+    listenerFr: 'frère aîné',
+    speakerPronounFr: 'oun (អូន)',
+    listenerPronounFr: 'bong (បង)',
+    speakerPronounKh: 'អូន',
+    listenerPronounKh: 'បង',
+    geminiContext:
+      'Relation entre frères ou cousins masculins, le plus jeune parle au plus âgé. ' +
+      'Le plus jeune se désigne comme "អូន" (oun) et appelle son frère aîné "បង" (bong). ' +
+      "Le frère aîné appelle le plus jeune \"oun\". Ton affectueux entre frères/cousins.",
+    quickPhrasesFr: [
+      'Tu as mangé ?',
+      'Je t\'aime bong',
+      'Tu me manques',
+      'Bonne nuit',
+      'Comment tu vas ?',
+      'À bientôt',
+      'Fais de beaux rêves',
+      'Prends soin de toi',
+    ],
+  },
+  {
+    id: 'younger_older_sister',
+    emoji: '👧',
+    labelFr: 'Plus jeune / Sœur aînée',
+    speakerFr: 'plus jeune',
+    listenerFr: 'sœur aînée',
+    speakerPronounFr: 'oun (អូន)',
+    listenerPronounFr: 'bong (បង)',
+    speakerPronounKh: 'អូន',
+    listenerPronounKh: 'បង',
+    geminiContext:
+      'Relation entre sœurs ou cousines, la plus jeune parle à la plus âgée. ' +
+      'La plus jeune se désigne comme "អូន" (oun) et appelle sa sœur aînée "បង" (bong). ' +
+      "La sœur aînée appelle la plus jeune \"oun\". Ton affectueux entre sœurs/cousines.",
+    quickPhrasesFr: [
+      'Tu as mangé ?',
+      'Je t\'aime bong',
+      'Tu me manques',
+      'Bonne nuit',
+      'Comment tu vas ?',
+      'À bientôt',
+      'Fais de beaux rêves',
+      'Prends soin de toi',
+    ],
+  },
+  {
+    id: 'nephew_niece_uncle_elder',
+    emoji: '🧔',
+    labelFr: 'Neveu/Nièce / Oncle aîné',
+    speakerFr: 'neveu ou nièce',
+    listenerFr: 'oncle aîné (plus âgé que tes parents)',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'om (អ៊ំ)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'អ៊ំ',
+    geminiContext:
+      "Oncle plus âgé que les parents du locuteur. Le neveu/nièce se désigne comme " +
+      '"ខ្លួន" (khloun) et appelle cet oncle "អ៊ំ" (om). Ton très respectueux.',
+    quickPhrasesFr: [
+      'Comment tu vas om ?',
+      'Tu as bien mangé ?',
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+      "Je t'aime",
+    ],
+  },
+  {
+    id: 'nephew_niece_aunt_elder',
+    emoji: '👩‍🦳',
+    labelFr: 'Neveu/Nièce / Tante aînée',
+    speakerFr: 'neveu ou nièce',
+    listenerFr: 'tante aînée (plus âgée que tes parents)',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'om (អ៊ំ)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'អ៊ំ',
+    geminiContext:
+      'Tante plus âgée que les parents du locuteur. Le neveu/nièce se désigne comme ' +
+      '"ខ្លួន" (khloun) et appelle cette tante "អ៊ំ" (om). Ton très respectueux et affectueux.',
+    quickPhrasesFr: [
+      'Comment tu vas om ?',
+      'Tu as bien mangé ?',
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+      "Je t'aime",
+    ],
+  },
+  {
+    id: 'nephew_niece_uncle_younger',
+    emoji: '👨‍🦱',
+    labelFr: 'Neveu/Nièce / Oncle cadet',
+    speakerFr: 'neveu ou nièce',
+    listenerFr: 'oncle cadet (plus jeune que tes parents)',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'pou (ពូ)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'ពូ',
+    geminiContext:
+      'Oncle plus jeune que les parents du locuteur. Le neveu/nièce se désigne comme ' +
+      '"ខ្លួន" (khloun) et appelle cet oncle "ពូ" (pou). Ton respectueux mais plus détendu.',
+    quickPhrasesFr: [
+      'Comment tu vas pou ?',
+      'Tu as mangé ?',
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+      "Je t'aime",
+    ],
+  },
+  {
+    id: 'nephew_niece_aunt_younger',
+    emoji: '👩‍🦱',
+    labelFr: 'Neveu/Nièce / Tante cadette',
+    speakerFr: 'neveu ou nièce',
+    listenerFr: 'tante cadette (plus jeune que tes parents)',
+    speakerPronounFr: 'khloun (ខ្លួន)',
+    listenerPronounFr: 'ming (មីង)',
+    speakerPronounKh: 'ខ្លួន',
+    listenerPronounKh: 'មីង',
+    geminiContext:
+      'Tante plus jeune que les parents du locuteur. Le neveu/nièce se désigne comme ' +
+      '"ខ្លួន" (khloun) et appelle cette tante "មីង" (ming). Ton respectueux et chaleureux.',
+    quickPhrasesFr: [
+      'Comment tu vas ming ?',
+      'Tu as mangé ?',
+      'Tu me manques',
+      'Prends soin de toi',
+      'Bonne nuit',
+      'À bientôt',
+      'Je pense à toi',
+      "Je t'aime",
+    ],
+  },
+];

@@ -1,6 +1,6 @@
 // No SDK in the browser — all Gemini calls go through our Express server at /api/gemini.
 // The API key stays server-side (Cloud Run env var), never in the JS bundle.
-import type { TranslationResult, WordOfDay, Mode, Tone } from '../types';
+import type { TranslationResult, WordOfDay, FamilyRelationship, Direction, Tone } from '../types';
 import { buildWavHeader } from './utils';
 
 async function callGemini(model: string, body: object): Promise<any> {
@@ -22,28 +22,34 @@ function getText(response: any): string {
 
 export async function translate(
   text: string,
-  mode: Mode,
+  relationship: FamilyRelationship,
+  direction: Direction,
   tone: Tone,
   imageBase64?: string
 ): Promise<TranslationResult> {
-  const isBong = mode === 'BONG_TO_OUN';
   const tonePrompt = {
-    sweet: 'Utilise un ton très doux, romantique et affectueux (mots doux, expressions tendres).',
-    funny: 'Utilise un ton drôle, taquin et léger (pour se faire rire mutuellement).',
-    daily: 'Utilise un ton simple, pratique et quotidien (pour les choses de la vie de tous les jours).',
+    sweet: 'Utilise un ton doux et affectueux.',
+    funny: 'Utilise un ton léger, taquin et amusant.',
+    daily: 'Utilise un ton simple et quotidien.',
   }[tone];
 
-  const prompt = isBong
-    ? `Traduis cette phrase ou analyse cette image du français vers le khmer pour ma petite amie au Cambodge.
-       CONTEXTE : Je suis un homme plus âgé (Bong), elle est plus jeune (Oun).
-       ${tonePrompt}`
-    : `Traduis cette phrase ou analyse cette image du khmer vers le français pour mon petit ami français.
-       CONTEXTE : Je suis une femme plus jeune (Oun), il est plus âgé (Bong).
-       ${tonePrompt}`;
+  const prompt =
+    direction === 'FR_TO_KH'
+      ? `Tu aides quelqu'un à parler à un membre de sa famille cambodgienne en khmer.
+         Contexte relationnel : ${relationship.geminiContext}
+         Le locuteur (${relationship.speakerFr}) se désigne comme "${relationship.speakerPronounKh}" (${relationship.speakerPronounFr}).
+         Il/elle s'adresse à son/sa ${relationship.listenerFr} qu'il/elle appelle "${relationship.listenerPronounKh}" (${relationship.listenerPronounFr}).
+         ${tonePrompt}
+         Traduis du français vers le khmer en utilisant absolument les bons pronoms et le registre approprié à cette relation.`
+      : `Tu aides quelqu'un à comprendre un message de son/sa ${relationship.listenerFr} cambodgien(ne).
+         Contexte relationnel : ${relationship.geminiContext}
+         Le/la ${relationship.listenerFr} se désigne comme "${relationship.listenerPronounKh}" (${relationship.listenerPronounFr}).
+         Il/elle s'adresse au locuteur (${relationship.speakerFr}) comme "${relationship.speakerPronounKh}" (${relationship.speakerPronounFr}).
+         Traduis du khmer vers le français en expliquant le contexte culturel si nécessaire.`;
 
   const parts: any[] = [
     {
-      text: `${prompt}\n\nTexte/Image à traduire : "${text}"\n\nRéponds UNIQUEMENT au format JSON : { "translatedText", "phonetic", "explanation", "originalText" }`,
+      text: `${prompt}\n\nTexte à traduire : "${text}"\n\nRéponds UNIQUEMENT au format JSON : { "translatedText", "phonetic", "explanation", "originalText" }`,
     },
   ];
 
@@ -101,7 +107,7 @@ export async function generateWordOfDay(): Promise<WordOfDay> {
   if (cached && cachedDate === today) return JSON.parse(cached);
 
   const response = await callGemini('gemini-3-flash-preview', {
-    contents: [{ parts: [{ text: "Génère un mot ou une expression courte et romantique en français avec sa traduction en khmer et sa phonétique pour un couple. Réponds en JSON: {fr, kh, phon}" }] }],
+    contents: [{ parts: [{ text: 'Génère un mot ou une expression courte et utile pour parler à sa famille cambodgienne. Réponds en JSON: {fr, kh, phon}' }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
 

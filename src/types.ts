@@ -1,3 +1,17 @@
+export interface FamilyRelationship {
+  id: string;
+  emoji: string;
+  labelFr: string;
+  speakerFr: string;
+  listenerFr: string;
+  speakerPronounFr: string;   // ex: "cheut (ចៅ)"
+  listenerPronounFr: string;  // ex: "ta (តា)"
+  speakerPronounKh: string;   // Khmer script
+  listenerPronounKh: string;  // Khmer script
+  geminiContext: string;
+  quickPhrasesFr: string[];
+}
+
 export interface TranslationResult {
   translatedText: string;
   phonetic?: string;
@@ -9,7 +23,8 @@ export interface HistoryEntry {
   source: string;
   target: string;
   phonetic?: string;
-  mode: Mode;
+  relationshipId: string;
+  direction: Direction;
   ts: number;
 }
 
@@ -19,6 +34,6 @@ export interface WordOfDay {
   phon: string;
 }
 
-export type Mode = 'BONG_TO_OUN' | 'OUN_TO_BONG';
+export type Direction = 'FR_TO_KH' | 'KH_TO_FR';
 export type Tab = 'translate' | 'favorites' | 'learn' | 'guide';
 export type Tone = 'sweet' | 'funny' | 'daily';

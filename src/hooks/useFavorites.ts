@@ -40,7 +40,7 @@ export function useFavorites() {
   const isFavorite = (res: TranslationResult) =>
     favorites.some((f) => f.translatedText === res.translatedText);
 
-  const addToHistory = (entry: Omit<HistoryEntry, 'ts'>) => {
+  const addToHistory = (entry: Omit<HistoryEntry, 'ts'> & { relationshipId: string; direction: import('../types').Direction }) => {
     setHistory((prev) =>
       [{ ...entry, ts: Date.now() }, ...prev].slice(0, 10)
     );

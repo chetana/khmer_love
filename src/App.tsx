@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { Languages, Star, BookOpen, Lightbulb } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 
-import type { Mode, Tab } from './types';
+import type { FamilyRelationship, Direction, Tab } from './types';
+import { RELATIONSHIPS } from './lib/relationships';
 import { speak, generateWordOfDay } from './lib/gemini';
 import { useToast } from './hooks/useToast';
 import { useFavorites } from './hooks/useFavorites';
@@ -15,14 +16,36 @@ import { ToastContainer } from './components/Toast';
 import { NavButton } from './components/NavButton';
 import { Header } from './components/Header';
 import { WordOfDayCard } from './components/WordOfDay';
+import { RelationshipPicker } from './components/RelationshipPicker';
 import { TranslateTab } from './components/tabs/TranslateTab';
 import { FavoritesTab } from './components/tabs/FavoritesTab';
 import { LearnTab } from './components/tabs/LearnTab';
 import { GuideTab } from './components/tabs/GuideTab';
 
+function loadRelationship(): FamilyRelationship {
+  try {
+    const saved = localStorage.getItem('khmer_relationship_id');
+    if (saved) {
+      const found = RELATIONSHIPS.find((r) => r.id === saved);
+      if (found) return found;
+    }
+  } catch {}
+  return RELATIONSHIPS[0];
+}
+
+function loadDirection(): Direction {
+  try {
+    const saved = localStorage.getItem('khmer_direction') as Direction | null;
+    if (saved === 'FR_TO_KH' || saved === 'KH_TO_FR') return saved;
+  } catch {}
+  return 'FR_TO_KH';
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('translate');
-  const [mode, setMode] = useState<Mode>('BONG_TO_OUN');
+  const [relationship, setRelationship] = useState<FamilyRelationship>(loadRelationship);
+  const [direction, setDirection] = useState<Direction>(loadDirection);
+  const [showPicker, setShowPicker] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [wordOfDay, setWordOfDay] = useState<{ fr: string; kh: string; phon: string } | null>(null);
 
@@ -34,6 +57,17 @@ export default function App() {
       .then(setWordOfDay)
       .catch(() => showToast('Impossible de charger le mot du jour'));
   }, []);
+
+  const handleSelectRelationship = (r: FamilyRelationship) => {
+    setRelationship(r);
+    localStorage.setItem('khmer_relationship_id', r.id);
+  };
+
+  const handleToggleDirection = () => {
+    const next: Direction = direction === 'FR_TO_KH' ? 'KH_TO_FR' : 'FR_TO_KH';
+    setDirection(next);
+    localStorage.setItem('khmer_direction', next);
+  };
 
   const handleSpeak = async (text: string, lang: 'kh' | 'fr') => {
     if (isSpeaking || !text) return;
@@ -47,17 +81,26 @@ export default function App() {
     }
   };
 
-  const handleModeChange = (newMode: Mode) => {
-    setMode(newMode);
-  };
-
   return (
     <div className="min-h-screen bg-[#fdfcf8] flex flex-col max-w-2xl mx-auto border-x border-stone-100 shadow-2xl">
       <ToastContainer toasts={toasts} />
 
-      <Header mode={mode} onModeChange={handleModeChange} />
+      {showPicker && (
+        <RelationshipPicker
+          current={relationship}
+          onSelect={handleSelectRelationship}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
 
-      {/* Word of the Day - only on translate tab */}
+      <Header
+        relationship={relationship}
+        direction={direction}
+        onOpenPicker={() => setShowPicker(true)}
+        onToggleDirection={handleToggleDirection}
+      />
+
+      {/* Word of the Day */}
       {activeTab === 'translate' && wordOfDay && (
         <div className="px-4 pt-2">
           <WordOfDayCard
@@ -72,14 +115,14 @@ export default function App() {
         <AnimatePresence mode="wait">
           {activeTab === 'translate' && (
             <TranslateTab
-              mode={mode}
-              wordOfDay={wordOfDay}
+              relationship={relationship}
+              direction={direction}
               isSpeaking={isSpeaking}
               isFavorite={isFavorite}
               onSpeak={handleSpeak}
               onToggleFavorite={toggleFavorite}
-              onAddHistory={(source, target, phonetic, m) =>
-                addToHistory({ source, target, phonetic, mode: m })
+              onAddHistory={(source, target, phonetic) =>
+                addToHistory({ source, target, phonetic, relationshipId: relationship.id, direction })
               }
               onError={showToast}
             />
