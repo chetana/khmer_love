@@ -1,16 +1,12 @@
-import { ChevronDown, ArrowLeftRight } from 'lucide-react';
-import type { FamilyRelationship, Direction } from '../types';
+import { ChevronDown } from 'lucide-react';
+import type { FamilyRelationship } from '../types';
 
 interface HeaderProps {
   relationship: FamilyRelationship;
-  direction: Direction;
   onOpenPicker: () => void;
-  onToggleDirection: () => void;
 }
 
-export function Header({ relationship, direction, onOpenPicker, onToggleDirection }: HeaderProps) {
-  const isFrToKh = direction === 'FR_TO_KH';
-  // Strip parenthetical clarifications for compact display (e.g. "tante cadette (plus jeune...)" → "tante cadette")
+export function Header({ relationship, onOpenPicker }: HeaderProps) {
   const listenerShort = relationship.listenerFr.split('(')[0].trim();
 
   return (
@@ -36,16 +32,12 @@ export function Header({ relationship, direction, onOpenPicker, onToggleDirectio
         <ChevronDown className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
       </button>
 
-      {/* Direction toggle */}
-      <button
-        onClick={onToggleDirection}
-        className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-full transition-all flex-shrink-0 text-xs font-bold"
-        title={isFrToKh ? 'Passer en Khmer → Français' : 'Passer en Français → Khmer'}
-      >
-        <span>{isFrToKh ? '🇫🇷' : '🇰🇭'}</span>
-        <ArrowLeftRight className="w-3 h-3" />
-        <span>{isFrToKh ? '🇰🇭' : '🇫🇷'}</span>
-      </button>
+      {/* FR ↔ KH indicator (non-interactive, just visual) */}
+      <div className="flex items-center gap-1 flex-shrink-0 text-stone-400 text-sm">
+        <span>🇫🇷</span>
+        <span className="text-xs">↔</span>
+        <span>🇰🇭</span>
+      </div>
     </header>
   );
 }

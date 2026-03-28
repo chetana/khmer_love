@@ -95,9 +95,7 @@ export default function App() {
 
       <Header
         relationship={relationship}
-        direction={direction}
         onOpenPicker={() => setShowPicker(true)}
-        onToggleDirection={handleToggleDirection}
       />
 
       {/* Word of the Day */}
