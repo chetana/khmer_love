@@ -4,16 +4,18 @@ import {
   Volume2, Camera, Star, Share2, Laugh, Coffee, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { TranslationResult, FamilyRelationship, Direction, Tone } from '../../types';
+import type { TranslationResult, FamilyRelationship, Direction, Tone, WordOfDay } from '../../types';
 import { translate } from '../../lib/gemini';
 import { cn } from '../../lib/utils';
 import { ImagePreview } from '../ImagePreview';
+import { WordOfDayCard } from '../WordOfDay';
 
 interface TranslateTabProps {
   relationship: FamilyRelationship;
   direction: Direction;
   isSpeaking: boolean;
   isFavorite: (res: TranslationResult) => boolean;
+  wordOfDay: WordOfDay | null;
   onSpeak: (text: string, lang: 'kh' | 'fr') => void;
   onToggleFavorite: (res: TranslationResult) => void;
   onAddHistory: (source: string, target: string, phonetic: string | undefined, explanation: string | undefined) => void;
@@ -25,6 +27,7 @@ export function TranslateTab({
   direction,
   isSpeaking,
   isFavorite,
+  wordOfDay,
   onSpeak,
   onToggleFavorite,
   onAddHistory,
@@ -385,6 +388,15 @@ export function TranslateTab({
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Mot ou expression du jour ── */}
+      {wordOfDay && (
+        <WordOfDayCard
+          word={wordOfDay}
+          isSpeaking={isSpeaking}
+          onSpeak={() => onSpeak(wordOfDay.kh, 'kh')}
+        />
+      )}
 
       {/* ── Phrases rapides (en bas) ── */}
       <div className="space-y-3">

@@ -15,7 +15,6 @@ import { useFavorites } from './hooks/useFavorites';
 import { ToastContainer } from './components/Toast';
 import { NavButton } from './components/NavButton';
 import { Header } from './components/Header';
-import { WordOfDayCard } from './components/WordOfDay';
 import { RelationshipPicker } from './components/RelationshipPicker';
 import { TranslateTab } from './components/tabs/TranslateTab';
 import { FavoritesTab } from './components/tabs/FavoritesTab';
@@ -98,17 +97,6 @@ export default function App() {
         onOpenPicker={() => setShowPicker(true)}
       />
 
-      {/* Word of the Day */}
-      {activeTab === 'translate' && wordOfDay && (
-        <div className="px-4 pt-2">
-          <WordOfDayCard
-            word={wordOfDay}
-            isSpeaking={isSpeaking}
-            onSpeak={() => handleSpeak(wordOfDay.kh, 'kh')}
-          />
-        </div>
-      )}
-
       <main className="flex-1 overflow-y-auto p-4 pb-24">
         <AnimatePresence mode="wait">
           {activeTab === 'translate' && (
@@ -117,6 +105,7 @@ export default function App() {
               direction={direction}
               isSpeaking={isSpeaking}
               isFavorite={isFavorite}
+              wordOfDay={wordOfDay}
               onSpeak={handleSpeak}
               onToggleFavorite={toggleFavorite}
               onAddHistory={(source, target, phonetic, explanation) =>
