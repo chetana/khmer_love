@@ -121,8 +121,8 @@ export default function App() {
               isFavorite={isFavorite}
               onSpeak={handleSpeak}
               onToggleFavorite={toggleFavorite}
-              onAddHistory={(source, target, phonetic) =>
-                addToHistory({ source, target, phonetic, relationshipId: relationship.id, direction })
+              onAddHistory={(source, target, phonetic, explanation) =>
+                addToHistory({ source, target, phonetic, explanation, relationshipId: relationship.id, direction })
               }
               onError={showToast}
             />

@@ -23,6 +23,7 @@ export interface HistoryEntry {
   source: string;
   target: string;
   phonetic?: string;
+  explanation?: string;
   relationshipId: string;
   direction: Direction;
   ts: number;

@@ -16,7 +16,7 @@ interface TranslateTabProps {
   isFavorite: (res: TranslationResult) => boolean;
   onSpeak: (text: string, lang: 'kh' | 'fr') => void;
   onToggleFavorite: (res: TranslationResult) => void;
-  onAddHistory: (source: string, target: string, phonetic: string | undefined) => void;
+  onAddHistory: (source: string, target: string, phonetic: string | undefined, explanation: string | undefined) => void;
   onError: (msg: string) => void;
 }
 
@@ -48,7 +48,7 @@ export function TranslateTab({
       const data = await translate(text, relationship, direction, tone, pendingImage ?? undefined);
       setResult(data);
       setPendingImage(null);
-      onAddHistory(text || 'Image', data.translatedText, data.phonetic);
+      onAddHistory(text || 'Image', data.translatedText, data.phonetic, data.explanation);
     } catch (e) {
       console.error(e);
       onError('Erreur de traduction. Vérifie ta connexion.');

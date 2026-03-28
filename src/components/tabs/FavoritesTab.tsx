@@ -1,6 +1,7 @@
 import { Star, Volume2, Clock, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { TranslationResult, HistoryEntry } from '../../types';
+import { RELATIONSHIPS } from '../../lib/relationships';
 import { cn } from '../../lib/utils';
 
 interface FavoritesTabProps {
@@ -89,34 +90,64 @@ export function FavoritesTab({
           <div className="flex items-center gap-2 px-2">
             <Clock className="w-4 h-4 text-stone-400" />
             <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
-              Récents
+              Historique récent
             </h3>
           </div>
-          <div className="space-y-2">
-            {history.map((entry, i) => (
-              <div
-                key={i}
-                className="bg-white p-4 rounded-2xl border border-stone-100 flex items-center gap-3"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-stone-400 truncate">
-                      {entry.mode === 'BONG_TO_OUN' ? '🇫🇷' : '🇰🇭'} {entry.source}
-                    </span>
-                    <ArrowRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
-                  </div>
-                  <p
-                    className={cn(
-                      'text-stone-700 truncate mt-0.5',
-                      entry.mode === 'BONG_TO_OUN' ? 'khmer-text text-lg' : 'text-sm'
+          <div className="space-y-3">
+            {history.map((entry, i) => {
+              const rel = RELATIONSHIPS.find((r) => r.id === entry.relationshipId);
+              const isFrToKh = entry.direction === 'FR_TO_KH';
+              return (
+                <div
+                  key={i}
+                  className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm space-y-2"
+                >
+                  {/* Relationship badge + time */}
+                  <div className="flex items-center justify-between">
+                    {rel && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-stone-400">
+                        <span>{rel.emoji}</span>
+                        <span className="font-medium">{rel.listenerFr}</span>
+                        <span className="text-stone-300">·</span>
+                        <span>{isFrToKh ? '🇫🇷 → 🇰🇭' : '🇰🇭 → 🇫🇷'}</span>
+                      </div>
                     )}
-                  >
-                    {entry.mode === 'BONG_TO_OUN' ? '🇰🇭' : '🇫🇷'} {entry.target}
-                  </p>
+                    <span className="text-[10px] text-stone-300">{timeAgo(entry.ts)}</span>
+                  </div>
+
+                  {/* Source → target */}
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className={cn(
+                        'text-xs text-stone-400 truncate',
+                        !isFrToKh && 'khmer-text text-sm text-stone-500'
+                      )}>
+                        {entry.source}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <ArrowRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
+                        <p className={cn(
+                          'truncate font-medium',
+                          isFrToKh ? 'khmer-text text-lg text-stone-800' : 'text-sm text-stone-700'
+                        )}>
+                          {entry.target}
+                        </p>
+                      </div>
+                      {entry.phonetic && (
+                        <p className="text-[10px] text-stone-400 italic">{entry.phonetic}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Explanation */}
+                  {entry.explanation && (
+                    <p className="text-[11px] text-stone-400 leading-relaxed pt-1 border-t border-stone-50">
+                      {entry.explanation}
+                    </p>
+                  )}
                 </div>
-                <span className="text-[10px] text-stone-300 flex-shrink-0">{timeAgo(entry.ts)}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

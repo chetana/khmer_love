@@ -21,7 +21,7 @@ export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
       </div>
       <div className="relative z-10 space-y-3">
         <div className="flex items-center gap-2 text-rose-500 font-bold text-[10px] uppercase tracking-widest">
-          <Sun className="w-3 h-3" /> Mot doux du jour
+          <Sun className="w-3 h-3" /> Mot ou expression du jour
         </div>
         <div className="flex justify-between items-end">
           <div className="space-y-1">

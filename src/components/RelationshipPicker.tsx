@@ -40,9 +40,9 @@ export function RelationshipPicker({ current, onSelect, onClose }: RelationshipP
         <div className="px-6 pb-6">
           <div className="flex justify-between items-center mb-5">
             <div>
-              <h2 className="text-lg font-bold text-stone-800">Quelle est votre relation ?</h2>
+              <h2 className="text-lg font-bold text-stone-800">Vous parlez avec qui ?</h2>
               <p className="text-xs text-stone-400 mt-0.5">
-                La traduction utilisera les bons pronoms khmer
+                Choisissez la personne à qui vous vous adressez
               </p>
             </div>
             <button
@@ -66,16 +66,19 @@ export function RelationshipPicker({ current, onSelect, onClose }: RelationshipP
                 )}
               >
                 <span className="text-3xl flex-shrink-0">{r.emoji}</span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
+                  {/* Listener = who you're talking TO — prominent */}
                   <p className={cn(
-                    'text-xs font-bold leading-tight',
-                    current.id === r.id ? 'text-rose-600' : 'text-stone-700'
+                    'text-sm font-bold leading-tight truncate',
+                    current.id === r.id ? 'text-rose-600' : 'text-stone-800'
                   )}>
-                    {r.speakerFr}
+                    {r.listenerFr}
                   </p>
+                  {/* Speaker = who you are — small, secondary */}
                   <p className="text-[10px] text-stone-400 leading-tight mt-0.5 truncate">
-                    → {r.listenerPronounFr}
+                    moi : {r.speakerFr}
                   </p>
+                  {/* Khmer pronouns: me → them */}
                   <p className="text-[11px] text-stone-500 mt-1 font-medium khmer-text">
                     {r.speakerPronounKh} → {r.listenerPronounKh}
                   </p>
