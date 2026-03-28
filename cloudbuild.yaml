@@ -22,7 +22,7 @@ steps:
       - '--image'
       - 'gcr.io/$PROJECT_ID/khmer-love-translator:latest'
       - '--region'
-      - 'europe-west1'
+      - 'us-west1'
       - '--allow-unauthenticated'
 
 images:
