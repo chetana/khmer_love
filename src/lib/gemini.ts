@@ -119,6 +119,22 @@ export async function generateWordOfDay(force = false): Promise<WordOfDay> {
   return data;
 }
 
+export async function askCultureChat(question: string): Promise<string> {
+  const response = await callGemini('gemini-3-flash-preview', {
+    contents: [{
+      parts: [{
+        text: `Tu es un expert de la culture et des traditions khmères (cambodgiennes).
+Tu réponds en français, de manière concise, chaleureuse et pratique.
+Tu couvres : langue, pronoms familiaux, coutumes, nourriture, fêtes (Nouvel An Khmer, Pchum Ben, Bon Om Touk), religion bouddhiste, argent (1 EUR ≈ 4400 KHR, 1 USD ≈ 4100 KHR), gestes de politesse, us et coutumes.
+Si on te demande une conversion d'argent, utilise ces taux approximatifs.
+
+Question : ${question}`,
+      }],
+    }],
+  });
+  return getText(response).trim() || 'Désolé, je n\'ai pas pu répondre à cette question.';
+}
+
 export async function generateFamilyVocab(): Promise<Array<{ fr: string; kh: string; phon: string }>> {
   const response = await callGemini('gemini-3-flash-preview', {
     contents: [{ parts: [{ text: `Génère exactement 15 expressions utiles pour parler avec sa famille cambodgienne.

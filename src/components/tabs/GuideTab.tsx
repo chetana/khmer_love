@@ -1,8 +1,9 @@
-import { Heart, Users, Info, Sparkles, ChevronDown } from 'lucide-react';
+import { Heart, Users, Info, Sparkles, ChevronDown, Send, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { RELATIONSHIPS } from '../../lib/relationships';
 import { cn } from '../../lib/utils';
+import { askCultureChat } from '../../lib/gemini';
 
 const CULTURAL_GUIDES = [
   {
@@ -35,10 +36,50 @@ const CULTURAL_GUIDES = [
   },
 ];
 
+const SUGGESTED_QUESTIONS = [
+  '💰 100 € c\'est combien en riels ?',
+  '🍜 Quels plats offrir à la belle-famille ?',
+  '🙏 Comment saluer les grands-parents ?',
+  '🎉 C\'est quoi Pchum Ben ?',
+  '👗 Comment s\'habiller pour rendre visite ?',
+  '🛕 Comment se comporter au temple ?',
+];
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
 export function GuideTab() {
   const [expandedRel, setExpandedRel] = useState<string | null>(null);
   const [expandedCulture, setExpandedCulture] = useState<number | null>(null);
   const [showAllRels, setShowAllRels] = useState(false);
+
+  // Culture chat
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const sendMessage = async (text?: string) => {
+    const question = (text ?? chatInput).trim();
+    if (!question || chatLoading) return;
+    setChatInput('');
+    setChatMessages((prev) => [...prev, { role: 'user', text: question }]);
+    setChatLoading(true);
+    try {
+      const answer = await askCultureChat(question);
+      setChatMessages((prev) => [...prev, { role: 'assistant', text: answer }]);
+    } catch {
+      setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Désolé, une erreur s\'est produite. Réessaie !' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -72,13 +113,9 @@ export function GuideTab() {
                     <span className="text-[10px] text-stone-400">moi : {r.speakerFr}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-stone-500 font-mono">
-                      {r.speakerPronounFr}
-                    </span>
+                    <span className="text-xs text-stone-500 font-mono">{r.speakerPronounFr}</span>
                     <span className="text-stone-300 text-xs">→</span>
-                    <span className="text-xs text-teal-600 font-semibold font-mono">
-                      {r.listenerPronounFr}
-                    </span>
+                    <span className="text-xs text-teal-600 font-semibold font-mono">{r.listenerPronounFr}</span>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -176,6 +213,88 @@ export function GuideTab() {
               )}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Culture Chat ── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-2">
+          <MessageCircle className="w-4 h-4 text-teal-500" />
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
+            Pose une question à Gemini
+          </h3>
+        </div>
+
+        <div className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden">
+          {/* Messages */}
+          {chatMessages.length > 0 && (
+            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+              {chatMessages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+                >
+                  <div
+                    className={cn(
+                      'max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                      msg.role === 'user'
+                        ? 'bg-teal-600 text-white rounded-br-sm'
+                        : 'bg-stone-50 text-stone-700 rounded-bl-sm border border-stone-100'
+                    )}
+                  >
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-stone-50 border border-stone-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+                    <Sparkles className="w-4 h-4 text-teal-400 animate-spin" />
+                  </div>
+                </div>
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+          )}
+
+          {/* Suggested questions (only if no messages yet) */}
+          {chatMessages.length === 0 && (
+            <div className="p-4 space-y-3">
+              <p className="text-xs text-stone-400 text-center">Questions fréquentes :</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {SUGGESTED_QUESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => sendMessage(q)}
+                    className="text-xs px-3 py-2 bg-stone-50 border border-stone-200 rounded-2xl text-stone-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 transition-all text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="flex gap-2 p-3 border-t border-stone-100">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
+              placeholder="Pose ta question sur la culture khmère..."
+              className="flex-1 bg-stone-50 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 placeholder:text-stone-300"
+            />
+            <button
+              onClick={() => sendMessage()}
+              disabled={!chatInput.trim() || chatLoading}
+              className="p-2.5 bg-teal-600 text-white rounded-full hover:bg-teal-700 disabled:bg-stone-100 disabled:text-stone-300 transition-all flex-shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </section>
     </motion.div>
