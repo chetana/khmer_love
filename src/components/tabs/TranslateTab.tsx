@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import {
   Send, Copy, Check, Info, Sparkles, ArrowRightLeft,
-  Volume2, Camera, Star, Share2, MessageSquare, Smile,
+  Volume2, Camera, Images, Star, Share2, MessageSquare, Smile, SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { TranslationResult, FamilyRelationship, Direction, WordOfDay } from '../../types';
+import type { TranslationResult, FamilyRelationship, Direction, Tone, WordOfDay } from '../../types';
 import { translate } from '../../lib/gemini';
 import { cn } from '../../lib/utils';
 import { ImagePreview } from '../ImagePreview';
@@ -40,22 +40,29 @@ export function TranslateTab({
   const [inputText, setInputText] = useState('');
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [tone, setTone] = useState<Tone>('daily');
   const [copied, setCopied] = useState<'single' | 'both' | null>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showTone, setShowTone] = useState(false);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
+  const toneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!showEmojis) return;
+    if (!showEmojis && !showTone) return;
     const handler = (e: MouseEvent) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+      if (showEmojis && emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
         setShowEmojis(false);
+      }
+      if (showTone && toneRef.current && !toneRef.current.contains(e.target as Node)) {
+        setShowTone(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showEmojis]);
+  }, [showEmojis, showTone]);
 
   // Reverse: understand what the family member said (KH→FR)
   const [reverseText, setReverseText] = useState('');
@@ -69,7 +76,7 @@ export function TranslateTab({
     if (!text.trim() && !pendingImage) return;
     setIsLoading(true);
     try {
-      const data = await translate(text, relationship, direction, 'daily', pendingImage ?? undefined);
+      const data = await translate(text, relationship, direction, tone, pendingImage ?? undefined);
       setResult(data);
       setPendingImage(null);
       onAddHistory(text || 'Image', data.translatedText, data.phonetic, data.explanation);
@@ -194,52 +201,104 @@ export function TranslateTab({
               className="w-full h-32 p-0 bg-transparent border-none focus:ring-0 text-xl transition-all placeholder:text-stone-300 resize-none"
             />
             <div className="flex justify-between items-center mt-2">
-              <div className="flex gap-2 relative" ref={emojiRef}>
+              <div className="flex gap-2">
+                {/* Gallery */}
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => galleryInputRef.current?.click()}
                   className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-teal-50 hover:text-teal-600 transition-all"
-                  title="Ajouter une image"
+                  title="Galerie photo"
+                >
+                  <Images className="w-5 h-5" />
+                </button>
+                <input type="file" ref={galleryInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
+
+                {/* Camera */}
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-teal-50 hover:text-teal-600 transition-all"
+                  title="Prendre une photo"
                 >
                   <Camera className="w-5 h-5" />
                 </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageSelect}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => setShowEmojis((v) => !v)}
-                  className={cn(
-                    'p-3 rounded-full transition-all',
-                    showEmojis ? 'bg-teal-50 text-teal-600' : 'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
-                  )}
-                  title="Ajouter un emoji"
-                >
-                  <Smile className="w-5 h-5" />
-                </button>
-                <AnimatePresence>
-                  {showEmojis && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute bottom-14 left-0 bg-white rounded-2xl shadow-xl border border-stone-100 p-3 grid grid-cols-5 gap-1 z-50"
-                    >
-                      {['❤️','🙏','😊','😘','🥰','✨','🌸','💐','🍚','🌙','😄','🤗','🫂','👋','🎉','🌺','🍊','🌿','☀️','🌹'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => { setInputText((prev) => prev + emoji); setShowEmojis(false); }}
-                          className="text-xl p-1.5 hover:scale-125 transition-transform active:scale-95 rounded-lg hover:bg-stone-50"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <input type="file" ref={cameraInputRef} onChange={handleImageSelect} accept="image/*" capture="environment" className="hidden" />
+
+                {/* Emoji picker */}
+                <div className="relative" ref={emojiRef}>
+                  <button
+                    onClick={() => { setShowEmojis((v) => !v); setShowTone(false); }}
+                    className={cn(
+                      'p-3 rounded-full transition-all',
+                      showEmojis ? 'bg-teal-50 text-teal-600' : 'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
+                    )}
+                    title="Ajouter un emoji"
+                  >
+                    <Smile className="w-5 h-5" />
+                  </button>
+                  <AnimatePresence>
+                    {showEmojis && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-14 left-0 bg-white rounded-2xl shadow-xl border border-stone-100 p-3 grid grid-cols-5 gap-1 z-50"
+                      >
+                        {['❤️','🙏','😊','😘','🥰','✨','🌸','💐','🍚','🌙','😄','🤗','🫂','👋','🎉','🌺','🍊','🌿','☀️','🌹'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => { setInputText((prev) => prev + emoji); setShowEmojis(false); }}
+                            className="text-xl p-1.5 hover:scale-125 transition-transform active:scale-95 rounded-lg hover:bg-stone-50"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Tone picker */}
+                <div className="relative" ref={toneRef}>
+                  <button
+                    onClick={() => { setShowTone((v) => !v); setShowEmojis(false); }}
+                    className={cn(
+                      'p-3 rounded-full transition-all',
+                      showTone ? 'bg-teal-50 text-teal-600' : 'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
+                    )}
+                    title="Ton du message"
+                  >
+                    <SlidersHorizontal className="w-5 h-5" />
+                  </button>
+                  <AnimatePresence>
+                    {showTone && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-14 left-0 bg-white rounded-2xl shadow-xl border border-stone-100 p-2 flex flex-col gap-1 z-50 min-w-[140px]"
+                      >
+                        {([
+                          { id: 'sweet', label: 'Doux', emoji: '🤍' },
+                          { id: 'funny', label: 'Drôle', emoji: '😄' },
+                          { id: 'daily', label: 'Quotidien', emoji: '☕' },
+                        ] as { id: Tone; label: string; emoji: string }[]).map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => { setTone(t.id); setShowTone(false); }}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left',
+                              tone === t.id ? 'bg-teal-50 text-teal-700' : 'text-stone-600 hover:bg-stone-50'
+                            )}
+                          >
+                            <span>{t.emoji}</span> {t.label}
+                            {tone === t.id && <Check className="w-3.5 h-3.5 ml-auto text-teal-500" />}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-stone-300">⌘↵</span>
