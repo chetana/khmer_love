@@ -317,23 +317,6 @@ export function TranslateTab({
           )}
         </AnimatePresence>
 
-        {/* Quick Phrases */}
-        <div className="space-y-3">
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400 px-2">
-            Phrases rapides — {relationship.listenerPronounFr}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {relationship.quickPhrasesFr.map((phrase, i) => (
-              <button
-                key={i}
-                onClick={() => setInputText(phrase)}
-                className="px-4 py-2 bg-white border border-stone-200 rounded-2xl text-sm text-stone-600 hover:border-teal-200 hover:bg-teal-50 transition-all"
-              >
-                {phrase}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* ── Section 2 : Comprendre ce que [listenerFr] t'a dit ── */}
@@ -401,6 +384,24 @@ export function TranslateTab({
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* ── Phrases rapides (en bas) ── */}
+      <div className="space-y-3">
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400 px-2">
+          Phrases rapides — {relationship.listenerPronounFr}
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {relationship.quickPhrasesFr.map((phrase, i) => (
+            <button
+              key={i}
+              onClick={() => setInputText(phrase)}
+              className="px-4 py-2 bg-white border border-stone-200 rounded-2xl text-sm text-stone-600 hover:border-teal-200 hover:bg-teal-50 transition-all"
+            >
+              {phrase}
+            </button>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
