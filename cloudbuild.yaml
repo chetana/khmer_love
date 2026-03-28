@@ -8,6 +8,23 @@ steps:
       - 'gcr.io/$PROJECT_ID/khmer-love-translator'
       - '.'
 
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/khmer-love-translator'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'khmer-love-translator'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/khmer-love-translator:latest'
+      - '--region'
+      - 'us-west1'
+      - '--allow-unauthenticated'
+
 images:
   - 'gcr.io/$PROJECT_ID/khmer-love-translator'
 
