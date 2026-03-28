@@ -2,7 +2,7 @@
 set -e
 
 PROJECT_ID="cykt-399216"
-REGION="us-west1"
+REGION="europe-west1"
 SERVICE="khmer-love-translator"
 IMAGE="gcr.io/$PROJECT_ID/$SERVICE"
 
