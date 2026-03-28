@@ -61,8 +61,8 @@ export function RelationshipPicker({ current, onSelect, onClose }: RelationshipP
                 className={cn(
                   'flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all',
                   current.id === r.id
-                    ? 'border-rose-300 bg-rose-50'
-                    : 'border-stone-100 bg-stone-50 hover:border-rose-200 hover:bg-rose-50/50'
+                    ? 'border-teal-300 bg-teal-50'
+                    : 'border-stone-100 bg-stone-50 hover:border-teal-200 hover:bg-teal-50/50'
                 )}
               >
                 <span className="text-3xl flex-shrink-0">{r.emoji}</span>
@@ -70,7 +70,7 @@ export function RelationshipPicker({ current, onSelect, onClose }: RelationshipP
                   {/* Listener = who you're talking TO — prominent */}
                   <p className={cn(
                     'text-sm font-bold leading-tight truncate',
-                    current.id === r.id ? 'text-rose-600' : 'text-stone-800'
+                    current.id === r.id ? 'text-teal-700' : 'text-stone-800'
                   )}>
                     {r.listenerFr}
                   </p>

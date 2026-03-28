@@ -72,7 +72,7 @@ export function FavoritesTab({
                 <button
                   onClick={() => onSpeak(fav.translatedText, 'kh')}
                   className={cn(
-                    'p-2 bg-stone-50 rounded-lg text-stone-400 hover:text-rose-500 transition-colors',
+                    'p-2 bg-stone-50 rounded-lg text-stone-400 hover:text-teal-600 transition-colors',
                     isSpeaking && 'opacity-50 cursor-not-allowed'
                   )}
                 >

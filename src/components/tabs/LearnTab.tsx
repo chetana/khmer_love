@@ -98,7 +98,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
 
       {/* Word of the Day */}
       {wordOfDay && (
-        <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-[32px] p-8 text-white shadow-xl shadow-rose-200 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-[32px] p-8 text-white shadow-xl shadow-teal-200 relative overflow-hidden">
           <Sparkles className="absolute -top-4 -right-4 w-24 h-24 opacity-10" />
           <span className="text-[10px] uppercase font-bold tracking-widest opacity-70">
             Expression du jour
@@ -142,13 +142,13 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               className="bg-white rounded-3xl border border-stone-100 shadow-sm p-8 text-center space-y-4"
             >
               <p className="text-stone-500 text-sm">
-                Teste tes connaissances sur {VOCAB.length} mots essentiels du couple.
+                Teste tes connaissances sur {VOCAB.length} mots essentiels de la famille khmère.
                 <br />
                 Tu vois le mot en khmer, trouve la bonne traduction !
               </p>
               <button
                 onClick={startQuiz}
-                className="px-8 py-3 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 transition-colors"
+                className="px-8 py-3 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-colors"
               >
                 Commencer le quiz
               </button>
@@ -167,7 +167,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               {/* Progress bar */}
               <div className="h-1 bg-stone-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-rose-400 rounded-full transition-all duration-300"
+                  className="h-full bg-teal-400 rounded-full transition-all duration-300"
                   style={{ width: `${((currentIdx + 1) / cards.length) * 100}%` }}
                 />
               </div>
@@ -188,7 +188,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 {choices.map((choice, i) => {
                   const isCorrect = choice.fr === current.fr;
                   const isSelected = selected?.fr === choice.fr;
-                  let style = 'bg-white border-stone-200 text-stone-700 hover:border-rose-300';
+                  let style = 'bg-white border-stone-200 text-stone-700 hover:border-teal-300';
                   if (quizState === 'answered') {
                     if (isCorrect) style = 'bg-emerald-50 border-emerald-300 text-emerald-700';
                     else if (isSelected) style = 'bg-red-50 border-red-300 text-red-600';
@@ -251,7 +251,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               </div>
               <button
                 onClick={startQuiz}
-                className="px-8 py-3 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 transition-colors flex items-center gap-2 mx-auto"
+                className="px-8 py-3 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-colors flex items-center gap-2 mx-auto"
               >
                 <RotateCcw className="w-4 h-4" /> Recommencer
               </button>

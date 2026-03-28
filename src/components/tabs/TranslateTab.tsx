@@ -109,15 +109,15 @@ export function TranslateTab({
       className="space-y-6"
     >
       {/* Relationship context banner */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-100 rounded-2xl">
+      <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-100 rounded-2xl">
         <span className="text-2xl">{relationship.emoji}</span>
         <div className="text-xs text-stone-600 leading-tight">
-          <span className="font-semibold text-rose-600">
+          <span className="font-semibold text-teal-700">
             {isFrToKh ? 'Vous' : relationship.listenerFr}
           </span>
           {' '}({isFrToKh ? relationship.speakerPronounFr : relationship.listenerPronounFr})
           {' → '}
-          <span className="font-semibold text-rose-600">
+          <span className="font-semibold text-teal-700">
             {isFrToKh ? relationship.listenerFr : 'vous'}
           </span>
           {' '}({isFrToKh ? relationship.listenerPronounFr : relationship.speakerPronounFr})
@@ -129,7 +129,7 @@ export function TranslateTab({
         {/* Tone Selector */}
         <div className="flex gap-2 p-1 bg-stone-50 rounded-2xl">
           {[
-            { id: 'sweet', label: 'Doux', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100' },
+            { id: 'sweet', label: 'Doux', icon: Heart, color: 'text-teal-600', bg: 'bg-teal-100' },
             { id: 'funny', label: 'Drôle', icon: Laugh, color: 'text-amber-500', bg: 'bg-amber-100' },
             { id: 'daily', label: 'Quotidien', icon: Coffee, color: 'text-blue-500', bg: 'bg-blue-100' },
           ].map((t) => (
@@ -189,7 +189,7 @@ export function TranslateTab({
             <div className="flex gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-all"
+                className="p-3 bg-stone-50 text-stone-400 rounded-full hover:bg-teal-50 hover:text-teal-600 transition-all"
                 title="Ajouter une image"
               >
                 <Camera className="w-5 h-5" />
@@ -223,7 +223,7 @@ export function TranslateTab({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-[32px] p-6 shadow-md border border-rose-100 space-y-6"
+            className="bg-white rounded-[32px] p-6 shadow-md border border-teal-100 space-y-6"
           >
             <div className="space-y-4">
               <div className="flex-1 text-center py-4">
@@ -241,7 +241,7 @@ export function TranslateTab({
               <div className="flex justify-center gap-3 flex-wrap">
                 <button
                   onClick={() => onSpeak(result.translatedText, isFrToKh ? 'kh' : 'fr')}
-                  className="p-4 bg-rose-50 text-rose-500 rounded-full hover:bg-rose-100 transition-all"
+                  className="p-4 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-100 transition-all"
                   title="Écouter"
                 >
                   <Volume2 className={cn('w-6 h-6', isSpeaking && 'animate-pulse')} />
@@ -262,7 +262,7 @@ export function TranslateTab({
                   onClick={() => copyToClipboard('both')}
                   className={cn(
                     'p-4 rounded-full transition-all',
-                    copied === 'both' ? 'bg-rose-100 text-rose-600' : 'bg-rose-50 text-rose-400 hover:bg-rose-100'
+                    copied === 'both' ? 'bg-teal-100 text-teal-700' : 'bg-teal-50 text-teal-400 hover:bg-teal-100'
                   )}
                   title="Copier source + traduction"
                 >
@@ -310,7 +310,7 @@ export function TranslateTab({
                 setInputText(phrase);
                 if (direction === 'KH_TO_FR') return; // phrases are in French
               }}
-              className="px-4 py-2 bg-white border border-stone-200 rounded-2xl text-sm text-stone-600 hover:border-rose-200 hover:bg-rose-50 transition-all"
+              className="px-4 py-2 bg-white border border-stone-200 rounded-2xl text-sm text-stone-600 hover:border-teal-200 hover:bg-teal-50 transition-all"
             >
               {phrase}
             </button>

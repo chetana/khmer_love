@@ -1,21 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Background circle -->
-  <circle cx="32" cy="32" r="32" fill="#FB7185"/>
-
+  <circle cx="32" cy="32" r="32" fill="#0F766E"/>
   <!-- Young person (left) -->
-  <!-- Head -->
-  <circle cx="20" cy="20" r="7" fill="white" opacity="0.95"/>
-  <!-- Body -->
-  <path d="M10 42 Q10 34 20 32 Q30 34 30 42" fill="white" opacity="0.95"/>
-
-  <!-- Arrow -->
-  <path d="M31 30 L33 30 M33 28 L36 30 L33 32" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.8"/>
-
-  <!-- Older person (right, ta/grandparent) -->
-  <!-- Head with slight white hair accent -->
-  <circle cx="45" cy="20" r="7" fill="white" opacity="0.85"/>
-  <!-- Hair accent -->
-  <path d="M38 16 Q45 12 52 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.5"/>
-  <!-- Body -->
-  <path d="M35 42 Q35 34 45 32 Q55 34 55 42" fill="white" opacity="0.85"/>
+  <circle cx="21" cy="21" r="7" fill="white" opacity="0.95"/>
+  <path d="M11 43 Q11 35 21 33 Q31 35 31 43" fill="white" opacity="0.95"/>
+  <!-- Saffron arrow -->
+  <path d="M33 32 L37 32" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M35 29 L38.5 32 L35 35" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Elder person (right) -->
+  <circle cx="44" cy="20" r="8" fill="white" opacity="0.85"/>
+  <path d="M35 43 Q35 34 44 32 Q53 34 53 43" fill="white" opacity="0.85"/>
 </svg>

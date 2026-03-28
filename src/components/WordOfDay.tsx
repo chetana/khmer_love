@@ -14,13 +14,13 @@ export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-[32px] p-6 border border-rose-100 shadow-sm relative overflow-hidden group"
+      className="bg-gradient-to-br from-teal-50 to-amber-50 rounded-[32px] p-6 border border-teal-100 shadow-sm relative overflow-hidden group"
     >
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <Heart className="w-24 h-24 text-rose-500 rotate-12" />
+        <Heart className="w-24 h-24 text-teal-600 rotate-12" />
       </div>
       <div className="relative z-10 space-y-3">
-        <div className="flex items-center gap-2 text-rose-500 font-bold text-[10px] uppercase tracking-widest">
+        <div className="flex items-center gap-2 text-teal-600 font-bold text-[10px] uppercase tracking-widest">
           <Sun className="w-3 h-3" /> Mot ou expression du jour
         </div>
         <div className="flex justify-between items-end">
@@ -31,7 +31,7 @@ export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
           </div>
           <button
             onClick={onSpeak}
-            className="p-3 bg-white/80 backdrop-blur-sm text-rose-500 rounded-full hover:bg-white transition-all shadow-sm"
+            className="p-3 bg-white/80 backdrop-blur-sm text-teal-600 rounded-full hover:bg-white transition-all shadow-sm"
           >
             <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
           </button>

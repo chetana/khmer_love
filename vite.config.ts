@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
           name: 'Famille Khmère',
           short_name: 'Famille Khmère',
           description: 'Traduction français–khmer pour parler avec ta famille cambodgienne',
-          theme_color: '#FB7185',
+          theme_color: '#0F766E',
           background_color: '#fdfcf8',
           display: 'standalone',
           start_url: '/',

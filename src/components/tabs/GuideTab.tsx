@@ -29,7 +29,7 @@ const CULTURAL_GUIDES = [
   {
     title: 'Bong & Oun',
     icon: Heart,
-    color: 'bg-rose-50 text-rose-500',
+    color: 'bg-teal-50 text-teal-600',
     short: "Le système de respect basé sur l'âge entre frères, sœurs et cousins.",
     long: "« Bong » (បង) désigne un aîné — homme ou femme — et signifie « grand frère/grande sœur ». « Oun » (អូន) désigne un cadet. Entre frères, sœurs ou cousins, on s'appelle par ces termes. C'est aussi utilisé dans les couples selon l'âge. Ce système de pronoms reflète la hiérarchie et le respect fondamentaux dans la culture khmère.",
   },
@@ -76,7 +76,7 @@ export function GuideTab() {
                       {r.speakerPronounFr}
                     </span>
                     <span className="text-stone-300 text-xs">→</span>
-                    <span className="text-xs text-rose-500 font-semibold font-mono">
+                    <span className="text-xs text-teal-600 font-semibold font-mono">
                       {r.listenerPronounFr}
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export function GuideTab() {
         {!showAllRels && (
           <button
             onClick={() => setShowAllRels(true)}
-            className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-rose-500 transition-colors"
+            className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-teal-600 transition-colors"
           >
             Voir les {RELATIONSHIPS.length - 4} autres relations ▾
           </button>

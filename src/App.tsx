@@ -82,7 +82,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfcf8] flex flex-col max-w-2xl mx-auto border-x border-stone-100 shadow-2xl">
+    <div className="min-h-screen bg-[#F7FDFB] flex flex-col max-w-2xl mx-auto border-x border-stone-100 shadow-2xl">
       <ToastContainer toasts={toasts} />
 
       {showPicker && (

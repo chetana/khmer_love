@@ -25,7 +25,7 @@ export function Header({ relationship, direction, onOpenPicker, onToggleDirectio
       {/* Relationship pill — tappable */}
       <button
         onClick={onOpenPicker}
-        className="flex items-center gap-2 px-3 py-2 bg-stone-50 hover:bg-rose-50 border border-stone-200 hover:border-rose-200 rounded-full transition-all flex-1 min-w-0 max-w-[200px]"
+        className="flex items-center gap-2 px-3 py-2 bg-stone-50 hover:bg-teal-50 border border-stone-200 hover:border-teal-200 rounded-full transition-all flex-1 min-w-0 max-w-[200px]"
       >
         <div className="flex flex-col items-start min-w-0 flex-1">
           <span className="text-[10px] text-stone-400 leading-none">parler avec</span>
