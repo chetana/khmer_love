@@ -1,6 +1,7 @@
 import { Heart, Users, Info, Sparkles, ChevronDown, Send, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { RELATIONSHIPS } from '../../lib/relationships';
 import { cn } from '../../lib/utils';
 import { askCultureChat } from '../../lib/gemini';
@@ -244,7 +245,23 @@ export function GuideTab() {
                         : 'bg-stone-50 text-stone-700 rounded-bl-sm border border-stone-100'
                     )}
                   >
-                    {msg.text}
+                    {msg.role === 'assistant' ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-semibold text-stone-800">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                          ul: ({ children }) => <ul className="list-disc pl-4 space-y-1 my-2">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1 my-2">{children}</ol>,
+                          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                          h3: ({ children }) => <h3 className="font-bold text-stone-800 mt-3 mb-1">{children}</h3>,
+                          h4: ({ children }) => <h4 className="font-semibold text-stone-700 mt-2 mb-1">{children}</h4>,
+                          code: ({ children }) => <code className="bg-stone-100 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+                        }}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    ) : msg.text}
                   </div>
                 </motion.div>
               ))}
