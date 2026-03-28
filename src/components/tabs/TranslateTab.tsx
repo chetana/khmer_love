@@ -16,7 +16,9 @@ interface TranslateTabProps {
   isSpeaking: boolean;
   isFavorite: (res: TranslationResult) => boolean;
   wordOfDay: WordOfDay | null;
+  isRefreshingWord?: boolean;
   onSpeak: (text: string, lang: 'kh' | 'fr') => void;
+  onRefreshWord: () => void;
   onToggleFavorite: (res: TranslationResult) => void;
   onAddHistory: (source: string, target: string, phonetic: string | undefined, explanation: string | undefined) => void;
   onError: (msg: string) => void;
@@ -28,7 +30,9 @@ export function TranslateTab({
   isSpeaking,
   isFavorite,
   wordOfDay,
+  isRefreshingWord,
   onSpeak,
+  onRefreshWord,
   onToggleFavorite,
   onAddHistory,
   onError,
@@ -394,7 +398,9 @@ export function TranslateTab({
         <WordOfDayCard
           word={wordOfDay}
           isSpeaking={isSpeaking}
+          isRefreshing={isRefreshingWord}
           onSpeak={() => onSpeak(wordOfDay.kh, 'kh')}
+          onRefresh={onRefreshWord}
         />
       )}
 

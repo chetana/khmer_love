@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, RotateCcw, ChevronRight, Check, X, Sparkles, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { WordOfDay } from '../../types';
+import { generateFamilyVocab } from '../../lib/gemini';
 import { cn } from '../../lib/utils';
 
 interface LearnTabProps {
@@ -16,24 +17,6 @@ interface VocabCard {
   phon: string;
 }
 
-const VOCAB: VocabCard[] = [
-  { fr: "Je t'aime", kh: 'ខ្ញុំស្រឡាញ់អ្នក', phon: 'khnhom srolanh anak' },
-  { fr: 'Tu me manques', kh: 'ខ្ញុំនឹកអ្នក', phon: 'khnhom nirk anak' },
-  { fr: 'Bonjour', kh: 'អរុណសួស្ដី', phon: 'arun soursdey' },
-  { fr: 'Bonne nuit', kh: 'រាត្រីសួស្ដី', phon: 'reatrey soursdey' },
-  { fr: 'Merci', kh: 'អរគុណ', phon: 'orkoun' },
-  { fr: 'Tu es belle', kh: 'អ្នកស្អាត', phon: "anak s'at" },
-  { fr: 'Prends soin de toi', kh: 'ថែខ្លួនផង', phon: 'thae kloun phong' },
-  { fr: 'Je pense à toi', kh: 'ខ្ញុំគិតដល់អ្នក', phon: 'khnhom kit dol anak' },
-  { fr: 'Mon amour', kh: 'ស្នេហ៍ខ្ញុំ', phon: 'sneh khnhom' },
-  { fr: 'Je suis heureux', kh: 'ខ្ញុំសប្បាយចិត្ត', phon: 'khnhom sabbay chet' },
-  { fr: 'Tu as mangé ?', kh: 'ញ៉ាំបាយហើយ?', phon: 'nham bay haoy?' },
-  { fr: 'Rêves doux', kh: 'យល់សប្ដិល្អ', phon: "yol sopti l'or" },
-  { fr: 'À bientôt', kh: 'ជួបគ្នាឆាប់ៗ', phon: 'choub knia chab chab' },
-  { fr: 'Mon cœur', kh: 'បេះដូងខ្ញុំ', phon: 'beh doung khnhom' },
-  { fr: "Je t'attends", kh: 'ខ្ញុំរង់ចាំអ្នក', phon: 'khnhom rong cham anak' },
-];
-
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
@@ -43,7 +26,7 @@ function buildChoices(correct: VocabCard, all: VocabCard[]): VocabCard[] {
   return shuffle([correct, ...wrong]);
 }
 
-type QuizState = 'idle' | 'playing' | 'answered' | 'complete';
+type QuizState = 'idle' | 'loading' | 'playing' | 'answered' | 'complete';
 
 export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
   const [quizState, setQuizState] = useState<QuizState>('idle');
@@ -52,23 +35,35 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<VocabCard | null>(null);
   const [choices, setChoices] = useState<VocabCard[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const startQuiz = () => {
-    const shuffled = shuffle(VOCAB).slice(0, 10);
-    setCards(shuffled);
-    setCurrentIdx(0);
-    setScore(0);
-    setSelected(null);
-    setChoices(buildChoices(shuffled[0], VOCAB));
-    setQuizState('playing');
+  const startQuiz = async () => {
+    setQuizState('loading');
+    setError(null);
+    try {
+      const vocab = await generateFamilyVocab();
+      if (!vocab || vocab.length < 4) {
+        setError('Impossible de générer le quiz. Vérifie ta connexion.');
+        setQuizState('idle');
+        return;
+      }
+      const shuffled = shuffle(vocab).slice(0, Math.min(10, vocab.length));
+      setCards(shuffled);
+      setCurrentIdx(0);
+      setScore(0);
+      setSelected(null);
+      setChoices(buildChoices(shuffled[0], vocab));
+      setQuizState('playing');
+    } catch {
+      setError('Erreur lors de la génération du quiz.');
+      setQuizState('idle');
+    }
   };
 
   const handleAnswer = (choice: VocabCard) => {
     if (quizState !== 'playing') return;
     setSelected(choice);
-    if (choice.fr === cards[currentIdx].fr) {
-      setScore((s) => s + 1);
-    }
+    if (choice.fr === cards[currentIdx].fr) setScore((s) => s + 1);
     setQuizState('answered');
   };
 
@@ -79,7 +74,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
     } else {
       setCurrentIdx(next);
       setSelected(null);
-      setChoices(buildChoices(cards[next], VOCAB));
+      setChoices(buildChoices(cards[next], cards));
       setQuizState('playing');
     }
   };
@@ -124,7 +119,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
           <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
             Quiz vocabulaire
           </h3>
-          {quizState !== 'idle' && quizState !== 'complete' && (
+          {(quizState === 'playing' || quizState === 'answered') && (
             <span className="text-xs text-stone-400">
               {currentIdx + 1} / {cards.length}
             </span>
@@ -141,8 +136,9 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               exit={{ opacity: 0 }}
               className="bg-white rounded-3xl border border-stone-100 shadow-sm p-8 text-center space-y-4"
             >
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <p className="text-stone-500 text-sm">
-                Teste tes connaissances sur {VOCAB.length} mots essentiels de la famille khmère.
+                Gemini génère 10 expressions de la famille khmère.
                 <br />
                 Tu vois le mot en khmer, trouve la bonne traduction !
               </p>
@@ -155,6 +151,20 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
             </motion.div>
           )}
 
+          {/* Loading */}
+          {quizState === 'loading' && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-white rounded-3xl border border-stone-100 shadow-sm p-12 text-center space-y-4"
+            >
+              <Sparkles className="w-10 h-10 mx-auto text-teal-400 animate-spin" />
+              <p className="text-stone-400 text-sm">Gemini prépare ton quiz...</p>
+            </motion.div>
+          )}
+
           {/* Playing / Answered */}
           {(quizState === 'playing' || quizState === 'answered') && current && (
             <motion.div
@@ -164,7 +174,6 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               exit={{ opacity: 0, x: -40 }}
               className="space-y-4"
             >
-              {/* Progress bar */}
               <div className="h-1 bg-stone-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-teal-400 rounded-full transition-all duration-300"
@@ -172,7 +181,6 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 />
               </div>
 
-              {/* Question card */}
               <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-3xl p-8 text-center space-y-2">
                 <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">
                   Comment dit-on en français ?
@@ -183,7 +191,6 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 )}
               </div>
 
-              {/* Choices */}
               <div className="grid grid-cols-1 gap-3">
                 {choices.map((choice, i) => {
                   const isCorrect = choice.fr === current.fr;
@@ -243,17 +250,17 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 </p>
                 <p className="text-stone-500 mt-2">
                   {score === cards.length
-                    ? 'Parfait ! Tu es bilingue 💕'
+                    ? 'Parfait ! Tu maîtrises le vocabulaire 🌟'
                     : score >= cards.length * 0.7
-                    ? 'Très bien ! Continue comme ça 🌹'
-                    : 'Continue à pratiquer ! ✨'}
+                    ? 'Très bien ! Continue comme ça ✨'
+                    : 'Continue à pratiquer ! 💪'}
                 </p>
               </div>
               <button
                 onClick={startQuiz}
                 className="px-8 py-3 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 transition-colors flex items-center gap-2 mx-auto"
               >
-                <RotateCcw className="w-4 h-4" /> Recommencer
+                <RotateCcw className="w-4 h-4" /> Nouveau quiz
               </button>
             </motion.div>
           )}

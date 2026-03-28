@@ -47,6 +47,7 @@ export default function App() {
   const [showPicker, setShowPicker] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [wordOfDay, setWordOfDay] = useState<{ fr: string; kh: string; phon: string } | null>(null);
+  const [isRefreshingWord, setIsRefreshingWord] = useState(false);
 
   const { toasts, showToast } = useToast();
   const { favorites, history, toggleFavorite, isFavorite, addToHistory } = useFavorites();
@@ -56,6 +57,18 @@ export default function App() {
       .then(setWordOfDay)
       .catch(() => showToast('Impossible de charger le mot du jour'));
   }, []);
+
+  const handleRefreshWord = async () => {
+    setIsRefreshingWord(true);
+    try {
+      const word = await generateWordOfDay(true);
+      setWordOfDay(word);
+    } catch {
+      showToast('Impossible de charger une nouvelle expression');
+    } finally {
+      setIsRefreshingWord(false);
+    }
+  };
 
   const handleSelectRelationship = (r: FamilyRelationship) => {
     setRelationship(r);
@@ -106,7 +119,9 @@ export default function App() {
               isSpeaking={isSpeaking}
               isFavorite={isFavorite}
               wordOfDay={wordOfDay}
+              isRefreshingWord={isRefreshingWord}
               onSpeak={handleSpeak}
+              onRefreshWord={handleRefreshWord}
               onToggleFavorite={toggleFavorite}
               onAddHistory={(source, target, phonetic, explanation) =>
                 addToHistory({ source, target, phonetic, explanation, relationshipId: relationship.id, direction })

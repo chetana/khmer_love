@@ -1,4 +1,4 @@
-import { Heart, Sun, Volume2 } from 'lucide-react';
+import { Heart, Sun, Volume2, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { WordOfDay } from '../types';
 import { cn } from '../lib/utils';
@@ -6,10 +6,12 @@ import { cn } from '../lib/utils';
 interface WordOfDayProps {
   word: WordOfDay;
   isSpeaking: boolean;
+  isRefreshing?: boolean;
   onSpeak: () => void;
+  onRefresh: () => void;
 }
 
-export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
+export function WordOfDayCard({ word, isSpeaking, isRefreshing, onSpeak, onRefresh }: WordOfDayProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -29,12 +31,22 @@ export function WordOfDayCard({ word, isSpeaking, onSpeak }: WordOfDayProps) {
             <p className="text-xs text-stone-400 italic">{word.phon}</p>
             <p className="serif-text text-lg text-stone-600">{word.fr}</p>
           </div>
-          <button
-            onClick={onSpeak}
-            className="p-3 bg-white/80 backdrop-blur-sm text-teal-600 rounded-full hover:bg-white transition-all shadow-sm"
-          >
-            <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={onSpeak}
+              className="p-3 bg-white/80 backdrop-blur-sm text-teal-600 rounded-full hover:bg-white transition-all shadow-sm"
+            >
+              <Volume2 className={cn('w-5 h-5', isSpeaking && 'animate-pulse')} />
+            </button>
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="p-3 bg-white/80 backdrop-blur-sm text-stone-400 rounded-full hover:bg-white hover:text-teal-600 transition-all shadow-sm disabled:opacity-40"
+              title="Autre expression"
+            >
+              <RefreshCw className={cn('w-5 h-5', isRefreshing && 'animate-spin')} />
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

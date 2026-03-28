@@ -100,14 +100,16 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
   });
 }
 
-export async function generateWordOfDay(): Promise<WordOfDay> {
+export async function generateWordOfDay(force = false): Promise<WordOfDay> {
   const today = new Date().toDateString();
-  const cached = localStorage.getItem('word_of_the_day');
-  const cachedDate = localStorage.getItem('word_of_the_day_date');
-  if (cached && cachedDate === today) return JSON.parse(cached);
+  if (!force) {
+    const cached = localStorage.getItem('word_of_the_day');
+    const cachedDate = localStorage.getItem('word_of_the_day_date');
+    if (cached && cachedDate === today) return JSON.parse(cached);
+  }
 
   const response = await callGemini('gemini-3-flash-preview', {
-    contents: [{ parts: [{ text: 'Génère un mot ou une expression courte et utile pour parler à sa famille cambodgienne. Réponds en JSON: {fr, kh, phon}' }] }],
+    contents: [{ parts: [{ text: 'Génère un mot ou une expression courte et utile pour parler à sa famille cambodgienne. Évite les expressions déjà courantes. Réponds en JSON: {fr, kh, phon}' }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
 
@@ -115,4 +117,21 @@ export async function generateWordOfDay(): Promise<WordOfDay> {
   localStorage.setItem('word_of_the_day', JSON.stringify(data));
   localStorage.setItem('word_of_the_day_date', today);
   return data;
+}
+
+export async function generateFamilyVocab(): Promise<Array<{ fr: string; kh: string; phon: string }>> {
+  const response = await callGemini('gemini-3-flash-preview', {
+    contents: [{ parts: [{ text: `Génère exactement 15 expressions utiles pour parler avec sa famille cambodgienne.
+Inclus : formules d'affection, questions du quotidien (manger, dormir, santé), expressions de respect, félicitations, réconfort.
+Varie les registres (formel/informel). Chaque expression doit être naturelle et couramment utilisée.
+Réponds UNIQUEMENT en JSON valide : [{"fr": "...", "kh": "...", "phon": "..."}]` }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  const raw = getText(response);
+  try {
+    const arr = JSON.parse(raw || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
 }
