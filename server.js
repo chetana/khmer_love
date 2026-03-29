@@ -37,6 +37,34 @@ app.post('/api/gemini', express.json({ limit: '20mb' }), async (req, res) => {
   }
 });
 
+// Audio transcription — Float32 WAV → texte via Gemini multimodal
+app.post('/api/transcribe', express.json({ limit: '20mb' }), async (req, res) => {
+  const { audio, mimeType } = req.body;
+  if (!audio || !mimeType) return res.status(400).json({ error: 'audio and mimeType required' });
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+  try {
+    const geminiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [
+          { inlineData: { mimeType, data: audio } },
+          { text: 'Transcris exactement ce qui est dit dans cet audio, mot pour mot. Réponds UNIQUEMENT avec le texte transcrit, sans aucun commentaire ni ponctuation ajoutée.' },
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 300, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+    });
+    const data = await geminiRes.json();
+    if (!geminiRes.ok) return res.status(geminiRes.status).json({ error: data?.error?.message ?? 'Gemini error' });
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+    res.json({ text });
+  } catch (e) {
+    console.error('Transcribe error:', e);
+    res.status(502).json({ error: 'Failed to transcribe audio' });
+  }
+});
+
 // Legacy proxy for the AI Studio service worker (kept as fallback)
 app.use('/gemini-api-proxy', (req, res) => {
   const originalUrl = new URL(req.url, 'http://localhost');

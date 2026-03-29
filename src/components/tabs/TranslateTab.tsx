@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import {
   Send, Copy, Check, Info, Sparkles, ArrowRightLeft,
-  Volume2, Loader2, Camera, Images, Star, Share2, MessageSquare, Smile, SlidersHorizontal,
+  Volume2, Loader2, Camera, Images, Star, Share2, MessageSquare, Mic, SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { TranslationResult, FamilyRelationship, Direction, Tone, WordOfDay } from '../../types';
@@ -43,26 +43,30 @@ export function TranslateTab({
   const [tone, setTone] = useState<Tone>('daily');
   const [copied, setCopied] = useState<'single' | 'both' | null>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
-  const [showEmojis, setShowEmojis] = useState(false);
   const [showTone, setShowTone] = useState(false);
+  const [vadLoading, setVadLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [micTarget, setMicTarget] = useState<'main' | 'reverse' | null>(null);
+  const vadRef = useRef<{ start(): void; destroy(): void } | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const emojiRef = useRef<HTMLDivElement>(null);
   const toneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!showEmojis && !showTone) return;
+    if (!showTone) return;
     const handler = (e: MouseEvent) => {
-      if (showEmojis && emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
-        setShowEmojis(false);
-      }
       if (showTone && toneRef.current && !toneRef.current.contains(e.target as Node)) {
         setShowTone(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showEmojis, showTone]);
+  }, [showTone]);
+
+  // Cleanup VAD on unmount
+  useEffect(() => () => { vadRef.current?.destroy(); }, []);
 
   // Reverse: understand what the family member said (KH→FR)
   const [reverseText, setReverseText] = useState('');
@@ -91,14 +95,15 @@ export function TranslateTab({
     }
   };
 
-  const handleReverseTranslate = async () => {
-    if (!reverseText.trim() && !reversePendingImage) return;
+  const handleReverseTranslate = async (textOverride?: string) => {
+    const text = textOverride ?? reverseText;
+    if (!text.trim() && !reversePendingImage) return;
     setReverseLoading(true);
     try {
-      const data = await translate(reverseText, relationship, 'KH_TO_FR', 'daily', reversePendingImage ?? undefined);
+      const data = await translate(text, relationship, 'KH_TO_FR', 'daily', reversePendingImage ?? undefined);
       setReverseResult(data);
       setReversePendingImage(null);
-      onAddHistory(reverseText || 'Image', data.translatedText, data.phonetic, data.explanation);
+      onAddHistory(text || 'Image', data.translatedText, data.phonetic, data.explanation);
     } catch (e) {
       console.error(e);
       onError('Erreur de traduction. Vérifie ta connexion.');
@@ -106,6 +111,102 @@ export function TranslateTab({
       setReverseLoading(false);
     }
   };
+
+  // ── VAD / Enregistrement audio ──────────────────────────────────────────
+  function float32ToWav(samples: Float32Array, sampleRate = 16000): Blob {
+    const len = samples.length;
+    const buf = new ArrayBuffer(44 + len * 2);
+    const view = new DataView(buf);
+    const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); view.setUint32(4, 36 + len * 2, true);
+    w(8, 'WAVE'); w(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    w(36, 'data'); view.setUint32(40, len * 2, true);
+    for (let i = 0; i < len; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(44 + i * 2, s < 0 ? s * 32768 : s * 32767, true);
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
+  function arrayBufferToBase64(buf: ArrayBuffer): string {
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
+  async function processAudio(samples: Float32Array, target: 'main' | 'reverse') {
+    if (samples.length < 16000 * 0.8) return; // < 0.8s → bruit court, ignorer
+    setTranscribing(true);
+    try {
+      const wav = float32ToWav(samples);
+      const base64 = arrayBufferToBase64(await wav.arrayBuffer());
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: base64, mimeType: 'audio/wav' }),
+      });
+      const { text } = await res.json() as { text: string };
+      if (!text?.trim()) return;
+      if (target === 'main') {
+        setInputText(text);
+        await handleTranslate(text);
+      } else {
+        setReverseText(text);
+        await handleReverseTranslate(text);
+      }
+    } catch {
+      onError('Erreur de transcription vocale.');
+    } finally {
+      setTranscribing(false);
+    }
+  }
+
+  async function startRecording(target: 'main' | 'reverse') {
+    if (vadRef.current || vadLoading) return;
+    setVadLoading(true);
+    setMicTarget(target);
+    try {
+      const { MicVAD } = await import('@ricky0123/vad-web');
+      const micVad = await MicVAD.new({
+        baseAssetPath: '/',
+        onnxWASMBasePath: '/',
+        ortConfig: (ort: any) => { ort.env.wasm.wasmPaths = '/'; },
+        model: 'v5',
+        getStream: () => navigator.mediaDevices.getUserMedia({ audio: { noiseSuppression: true, echoCancellation: true, autoGainControl: true } }),
+        onSpeechStart: () => setSpeaking(true),
+        onSpeechEnd: (audio: Float32Array) => {
+          setSpeaking(false);
+          void processAudio(audio, target);
+        },
+      });
+      vadRef.current = micVad;
+      vadRef.current.start();
+      setVadLoading(false);
+      setRecording(true);
+    } catch (e) {
+      console.error('VAD init failed:', e);
+      setVadLoading(false);
+      setMicTarget(null);
+    }
+  }
+
+  function stopRecording() {
+    vadRef.current?.destroy();
+    vadRef.current = null;
+    setVadLoading(false);
+    setRecording(false);
+    setSpeaking(false);
+    setMicTarget(null);
+  }
+
+  function toggleRecording(target: 'main' | 'reverse') {
+    if (vadLoading || recording) stopRecording();
+    else void startRecording(target);
+  }
 
   const handleReverseImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -160,6 +261,7 @@ export function TranslateTab({
     setReversePendingImage(null);
     setPrevRelId(relationship.id);
     setPrevDir(direction);
+    stopRecording();
   }
 
   const listenerShort = relationship.listenerFr.split('(')[0].trim();
@@ -236,45 +338,32 @@ export function TranslateTab({
                 </button>
                 <input type="file" ref={cameraInputRef} onChange={handleImageSelect} accept="image/*" capture="environment" className="hidden" />
 
-                {/* Emoji picker */}
-                <div className="relative" ref={emojiRef}>
-                  <button
-                    onClick={() => { setShowEmojis((v) => !v); setShowTone(false); }}
-                    className={cn(
-                      'p-3 rounded-full transition-all',
-                      showEmojis ? 'bg-teal-50 text-teal-600' : 'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
-                    )}
-                    title="Ajouter un emoji"
-                  >
-                    <Smile className="w-5 h-5" />
-                  </button>
-                  <AnimatePresence>
-                    {showEmojis && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute bottom-14 left-0 bg-white rounded-2xl shadow-xl border border-stone-100 p-3 grid grid-cols-5 gap-1 z-50"
-                      >
-                        {['❤️','🙏','😊','😘','🥰','✨','🌸','💐','🍚','🌙','😄','🤗','🫂','👋','🎉','🌺','🍊','🌿','☀️','🌹'].map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => { setInputText((prev) => prev + emoji); setShowEmojis(false); }}
-                            className="text-xl p-1.5 hover:scale-125 transition-transform active:scale-95 rounded-lg hover:bg-stone-50"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                {/* Mic VAD */}
+                <button
+                  onClick={() => toggleRecording('main')}
+                  disabled={transcribing || (recording && micTarget === 'reverse')}
+                  className={cn(
+                    'p-3 rounded-full transition-all',
+                    recording && micTarget === 'main' && !speaking ? 'bg-red-500 text-white' :
+                    speaking && micTarget === 'main' ? 'bg-green-600 text-white' :
+                    'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
+                  )}
+                  title={vadLoading && micTarget === 'main' ? 'Chargement…' : recording && micTarget === 'main' ? 'Arrêter' : 'Message vocal'}
+                >
+                  {vadLoading && micTarget === 'main'
+                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : (recording || speaking) && micTarget === 'main'
+                      ? <span className={cn('wav-bars', speaking && 'wav-active')}><span/><span/><span/><span/><span/></span>
+                      : transcribing && micTarget === 'main'
+                        ? <Loader2 className="w-5 h-5 animate-spin" />
+                        : <Mic className="w-5 h-5" />
+                  }
+                </button>
 
                 {/* Tone picker */}
                 <div className="relative" ref={toneRef}>
                   <button
-                    onClick={() => { setShowTone((v) => !v); setShowEmojis(false); }}
+                    onClick={() => { setShowTone((v) => !v); }}
                     className={cn(
                       'p-3 rounded-full transition-all',
                       showTone ? 'bg-teal-50 text-teal-600' : 'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
@@ -457,10 +546,32 @@ export function TranslateTab({
                 <Camera className="w-5 h-5" />
               </button>
               <input type="file" ref={reverseCameraInputRef} onChange={handleReverseImageSelect} accept="image/*" capture="environment" className="hidden" />
+
+              {/* Mic VAD section 2 */}
+              <button
+                onClick={() => toggleRecording('reverse')}
+                disabled={transcribing || (recording && micTarget === 'main')}
+                className={cn(
+                  'p-3 rounded-full transition-all',
+                  recording && micTarget === 'reverse' && !speaking ? 'bg-red-500 text-white' :
+                  speaking && micTarget === 'reverse' ? 'bg-green-600 text-white' :
+                  'bg-stone-50 text-stone-400 hover:bg-teal-50 hover:text-teal-600'
+                )}
+                title={vadLoading && micTarget === 'reverse' ? 'Chargement…' : recording && micTarget === 'reverse' ? 'Arrêter' : 'Dicter en khmer'}
+              >
+                {vadLoading && micTarget === 'reverse'
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : (recording || speaking) && micTarget === 'reverse'
+                    ? <span className={cn('wav-bars', speaking && 'wav-active')}><span/><span/><span/><span/><span/></span>
+                    : transcribing && micTarget === 'reverse'
+                      ? <Loader2 className="w-5 h-5 animate-spin" />
+                      : <Mic className="w-5 h-5" />
+                }
+              </button>
             </div>
 
             <button
-              onClick={handleReverseTranslate}
+              onClick={() => handleReverseTranslate()}
               disabled={reverseLoading || (!reverseText.trim() && !reversePendingImage)}
               className="px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-full hover:bg-teal-700 shadow-sm disabled:bg-stone-100 disabled:text-stone-300 transition-all flex items-center gap-2"
             >
