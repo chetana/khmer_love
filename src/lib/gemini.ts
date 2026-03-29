@@ -66,6 +66,18 @@ export async function translate(
   return JSON.parse(getText(response) || '{}');
 }
 
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  return _audioCtx;
+}
+
+// Call this synchronously inside an onClick handler to unlock audio on iOS Safari.
+export function ensureAudioUnlocked(): void {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
 function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) { reject(new Error('no web speech')); return; }
@@ -77,19 +89,22 @@ function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
   });
 }
 
-function playBase64Pcm(base64Audio: string): Promise<void> {
+async function playBase64Pcm(base64Audio: string): Promise<void> {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') await ctx.resume();
   const audioData = atob(base64Audio);
-  const pcmBuffer = new ArrayBuffer(audioData.length);
-  const pcmView = new Uint8Array(pcmBuffer);
-  for (let i = 0; i < audioData.length; i++) pcmView[i] = audioData.charCodeAt(i);
-  const blob = new Blob([buildWavHeader(audioData.length), pcmBuffer], { type: 'audio/wav' });
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  return new Promise((resolve, reject) => {
-    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-    audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
-    audio.play().catch(reject);
-  });
+  const pcmLen = audioData.length;
+  const pcmBuffer = new Uint8Array(pcmLen);
+  for (let i = 0; i < pcmLen; i++) pcmBuffer[i] = audioData.charCodeAt(i);
+  const header = new Uint8Array(buildWavHeader(pcmLen) as ArrayBuffer);
+  const wavBytes = new Uint8Array(44 + pcmLen);
+  wavBytes.set(header, 0);
+  wavBytes.set(pcmBuffer, 44);
+  const audioBuffer = await ctx.decodeAudioData(wavBytes.buffer);
+  const source = ctx.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(ctx.destination);
+  return new Promise((resolve) => { source.onended = () => resolve(); source.start(0); });
 }
 
 export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {

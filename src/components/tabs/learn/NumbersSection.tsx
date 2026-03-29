@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Check, RefreshCw, Trophy, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { NUMBERS } from '../../../data/numbers';
 import type { KhmerNumber } from '../../../data/numbers';
-import { speak } from '../../../lib/gemini';
+import { speak, ensureAudioUnlocked } from '../../../lib/gemini';
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -41,6 +41,7 @@ export function NumbersSection() {
   // Speak the Khmer WORD (e.g. "មួយ") not the glyph ("១") — much more reliable for TTS
   const handleCardSpeak = async () => {
     if (!current || isPlaying) return;
+    ensureAudioUnlocked();
     setAudioError(false);
     setIsPlaying(true);
     try {

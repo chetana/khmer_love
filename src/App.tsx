@@ -8,7 +8,7 @@ import { Languages, Star, BookOpen, Lightbulb } from 'lucide-react';
 
 import type { FamilyRelationship, Direction, Tab } from './types';
 import { RELATIONSHIPS } from './lib/relationships';
-import { speak, generateWordOfDay } from './lib/gemini';
+import { speak, generateWordOfDay, ensureAudioUnlocked } from './lib/gemini';
 import { useToast } from './hooks/useToast';
 import { useFavorites } from './hooks/useFavorites';
 import { ToastContainer } from './components/Toast';
@@ -82,6 +82,7 @@ export default function App() {
 
   const handleSpeak = async (text: string, lang: 'kh' | 'fr') => {
     if (isSpeaking || !text) return;
+    ensureAudioUnlocked();
     setIsSpeaking(true);
     try {
       await speak(text, lang);

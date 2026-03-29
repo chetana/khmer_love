@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Check, RefreshCw, Trophy, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { CONSONANTS, VOWELS } from '../../../data/alphabet';
 import type { AlphabetChar } from '../../../data/alphabet';
-import { speak } from '../../../lib/gemini';
+import { speak, ensureAudioUnlocked } from '../../../lib/gemini';
 import { cn } from '../../../lib/utils';
 
 type Group = 'consonants' | 'vowels';
@@ -79,6 +79,7 @@ export function AlphabetSection() {
 
   const handleCardSpeak = async () => {
     if (!current || isPlaying) return;
+    ensureAudioUnlocked();
     const text = current.example?.kh ?? current.char;
     setAudioError(false);
     setIsPlaying(true);
