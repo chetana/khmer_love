@@ -16,15 +16,21 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       viteStaticCopy({
         targets: [
-          { src: 'node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js', dest: './' },
-          { src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_v5.onnx', dest: './' },
-          { src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx', dest: './' },
-          { src: 'node_modules/onnxruntime-web/dist/*.wasm', dest: './' },
-          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs', dest: './' },
+          { src: 'node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_v5.onnx', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/@ricky0123/vad-web/dist/silero_vad_legacy.onnx', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jspi.wasm', dest: './', rename: { stripBase: true } },
+          { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs', dest: './', rename: { stripBase: true } },
         ],
       }),
       VitePWA({
         registerType: 'autoUpdate',
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,png,svg,webp,ico}'],
+        },
         manifest: {
           name: 'Famille Khmère',
           short_name: 'Famille Khmère',
