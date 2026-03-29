@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
+import { RotateCcw, Check, RefreshCw, Trophy, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { NUMBERS } from '../../../data/numbers';
 import type { KhmerNumber } from '../../../data/numbers';
 import { speak } from '../../../lib/gemini';
@@ -32,6 +32,7 @@ export function NumbersSection() {
   });
   const [flipped, setFlipped] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
 
   const current = deck[0] ?? null;
   const learnedCount = learned.size;
@@ -40,11 +41,12 @@ export function NumbersSection() {
   // Speak the Khmer WORD (e.g. "មួយ") not the glyph ("១") — much more reliable for TTS
   const handleCardSpeak = async () => {
     if (!current || isPlaying) return;
+    setAudioError(false);
     setIsPlaying(true);
     try {
       await speak(current.word, 'kh');
     } catch {
-      // Silent fail — no toast
+      setAudioError(true);
     } finally {
       setIsPlaying(false);
     }
@@ -58,11 +60,13 @@ export function NumbersSection() {
     saveLearned(next);
     setDeck((d) => d.slice(1));
     setFlipped(false);
+    setAudioError(false);
   };
 
   const markReview = () => {
     setDeck((d) => [...d.slice(1), d[0]]);
     setFlipped(false);
+    setAudioError(false);
   };
 
   const reset = () => {
@@ -160,14 +164,20 @@ export function NumbersSection() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleCardSpeak(); }}
                       disabled={isPlaying}
-                      className="p-2 bg-white/70 rounded-full text-amber-600 hover:bg-white transition-all disabled:opacity-50"
+                      title={audioError ? 'Audio non disponible pour ce mot' : 'Écouter'}
+                      className={`p-2 bg-white/70 rounded-full hover:bg-white transition-all disabled:opacity-50 ${audioError ? 'text-stone-400' : 'text-amber-600'}`}
                     >
-                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : audioError ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                   </div>
                   {current.hint && (
                     <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-1">
                       {current.hint}
+                    </p>
+                  )}
+                  {current.note && (
+                    <p className="text-xs text-stone-500 bg-white/70 rounded-xl px-3 py-2 text-center leading-relaxed max-w-[280px]">
+                      💡 {current.note}
                     </p>
                   )}
                 </motion.div>

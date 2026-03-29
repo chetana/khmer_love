@@ -2,6 +2,7 @@ export interface AlphabetChar {
   char: string;
   phon: string;
   example?: { kh: string; phon: string; fr: string };
+  note?: string;  // Extra info (e.g. vowel placement)
 }
 
 export const CONSONANTS: AlphabetChar[] = [
@@ -38,4 +39,28 @@ export const CONSONANTS: AlphabetChar[] = [
   { char: 'ហ', phon: 'h', example: { kh: 'ហូប', phon: 'hob', fr: 'manger (poli)' } },
   { char: 'ឡ', phon: 'l', example: { kh: 'ឡាន', phon: 'laan', fr: 'voiture' } },
   { char: 'អ', phon: 'a/o', example: { kh: 'អូន', phon: 'oun', fr: 'petit(e) frère/sœur' } },
+];
+
+// Independent vowels — used alone (without a consonant base)
+export const VOWELS: AlphabetChar[] = [
+  { char: 'អា', phon: 'aa', example: { kh: 'អាហារ', phon: 'aahaa', fr: 'nourriture' } },
+  { char: 'អិ', phon: 'i', example: { kh: 'អិម', phon: 'im', fr: 'sourire' }, note: 'Voyelle courte' },
+  { char: 'អី', phon: 'ei', example: { kh: 'អីវ៉ាន់', phon: 'ei-van', fr: 'affaires / bagages' } },
+  { char: 'អុ', phon: 'o', example: { kh: 'អុំ', phon: 'om', fr: 'méditer' }, note: 'Voyelle courte' },
+  { char: 'អូ', phon: 'oo', example: { kh: 'អូន', phon: 'oun', fr: 'petit(e) frère/sœur' } },
+  { char: 'អឿ', phon: 'ɯə', example: { kh: 'អឿ', phon: 'ɯə', fr: 'oh ! (interjection)' } },
+  { char: 'ឥ', phon: 'i', example: { kh: 'ឥឡូវ', phon: 'ei-lov', fr: 'maintenant' } },
+  { char: 'ឦ', phon: 'ii', example: { kh: 'ឦសាន', phon: 'ei-saan', fr: 'nord-est' } },
+  { char: 'ឧ', phon: 'u', example: { kh: 'ឧទ្យាន', phon: 'ut-tyen', fr: 'parc / jardin' } },
+  { char: 'ឩ', phon: 'uu', example: { kh: 'ឩបករណ៍', phon: 'uu-pa-kɑ', fr: 'outil / équipement' } },
+  { char: 'ឪ', phon: 'ov', example: { kh: 'ឪពុក', phon: 'ov-puk', fr: 'père / papa' } },
+  { char: 'ឫ', phon: 'rɨ', example: { kh: 'ឫស', phon: 'rɨh', fr: 'racine' } },
+  { char: 'ឬ', phon: 'rɨɨ', example: { kh: 'ឬ', phon: 'rɨɨ', fr: 'ou (conjonction)' } },
+  { char: 'ឭ', phon: 'lɨ', example: { kh: 'ឭ', phon: 'lɨ', fr: 'syllabe rare (textes anciens)' } },
+  { char: 'ឮ', phon: 'lɨɨ', example: { kh: 'ឮ', phon: 'lɨɨ', fr: 'entendre' } },
+  { char: 'ឯ', phon: 'ae', example: { kh: 'ឯករាជ្យ', phon: 'ae-ka-riec', fr: 'indépendance' } },
+  { char: 'ឰ', phon: 'ai', example: { kh: 'ឰដៀល', phon: 'ai-diel', fr: 'honte / gêne' } },
+  { char: 'ឱ', phon: 'ao', example: { kh: 'ឱ្យ', phon: 'aoy', fr: 'donner / pour que' } },
+  { char: 'ឲ', phon: 'ao', example: { kh: 'ឲ្យ', phon: 'aoy', fr: 'donner (variante de ឱ្យ)' }, note: 'Variante graphique de ឱ' },
+  { char: 'ឳ', phon: 'au', example: { kh: 'ឳ', phon: 'au', fr: 'interjection (oh !)' } },
 ];

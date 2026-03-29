@@ -1,50 +1,91 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
-import { CONSONANTS } from '../../../data/alphabet';
+import { RotateCcw, Check, RefreshCw, Trophy, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { CONSONANTS, VOWELS } from '../../../data/alphabet';
 import type { AlphabetChar } from '../../../data/alphabet';
 import { speak } from '../../../lib/gemini';
+import { cn } from '../../../lib/utils';
+
+type Group = 'consonants' | 'vowels';
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function loadLearned(): Set<string> {
+function loadLearned(key: string): Set<string> {
   try {
-    const saved = localStorage.getItem('khmer_alpha_learned');
+    const saved = localStorage.getItem(key);
     if (saved) return new Set(JSON.parse(saved) as string[]);
   } catch {}
   return new Set();
 }
 
-function saveLearned(learned: Set<string>) {
+function saveLearned(key: string, learned: Set<string>) {
   try {
-    localStorage.setItem('khmer_alpha_learned', JSON.stringify([...learned]));
+    localStorage.setItem(key, JSON.stringify([...learned]));
   } catch {}
 }
 
+function loadGroup(): Group {
+  try {
+    const g = localStorage.getItem('khmer_alpha_group') as Group | null;
+    if (g === 'consonants' || g === 'vowels') return g;
+  } catch {}
+  return 'consonants';
+}
+
+const STORAGE_KEYS: Record<Group, string> = {
+  consonants: 'khmer_alpha_learned',
+  vowels: 'khmer_vowels_learned',
+};
+
+const DATA: Record<Group, AlphabetChar[]> = {
+  consonants: CONSONANTS,
+  vowels: VOWELS,
+};
+
 // No props needed — manages its own audio state to avoid App's generic error toast
 export function AlphabetSection() {
-  const [learned, setLearned] = useState<Set<string>>(loadLearned);
+  const [group, setGroup] = useState<Group>(loadGroup);
+
+  const storageKey = STORAGE_KEYS[group];
+  const data = DATA[group];
+
+  const [learned, setLearned] = useState<Set<string>>(() => loadLearned(storageKey));
   const [deck, setDeck] = useState<AlphabetChar[]>(() => {
-    const l = loadLearned();
-    return shuffle(CONSONANTS.filter((c) => !l.has(c.char)));
+    const l = loadLearned(storageKey);
+    return shuffle(data.filter((c) => !l.has(c.char)));
   });
   const [flipped, setFlipped] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
 
   const current = deck[0] ?? null;
   const learnedCount = learned.size;
-  const total = CONSONANTS.length;
+  const total = data.length;
+
+  const switchGroup = (g: Group) => {
+    if (g === group) return;
+    setGroup(g);
+    try { localStorage.setItem('khmer_alpha_group', g); } catch {}
+    const key = STORAGE_KEYS[g];
+    const d = DATA[g];
+    const l = loadLearned(key);
+    setLearned(l);
+    setDeck(shuffle(d.filter((c) => !l.has(c.char))));
+    setFlipped(false);
+    setAudioError(false);
+  };
 
   const handleCardSpeak = async () => {
     if (!current || isPlaying) return;
     const text = current.example?.kh ?? current.char;
+    setAudioError(false);
     setIsPlaying(true);
     try {
       await speak(text, 'kh');
     } catch {
-      // Silent fail — some rare consonants may not TTS well; no toast shown
+      setAudioError(true);
     } finally {
       setIsPlaying(false);
     }
@@ -55,30 +96,51 @@ export function AlphabetSection() {
     const next = new Set(learned);
     next.add(current.char);
     setLearned(next);
-    saveLearned(next);
+    saveLearned(storageKey, next);
     setDeck((d) => d.slice(1));
     setFlipped(false);
+    setAudioError(false);
   };
 
   const markReview = () => {
     setDeck((d) => [...d.slice(1), d[0]]);
     setFlipped(false);
+    setAudioError(false);
   };
 
   const reset = () => {
     const empty = new Set<string>();
     setLearned(empty);
-    saveLearned(empty);
-    setDeck(shuffle(CONSONANTS));
+    saveLearned(storageKey, empty);
+    setDeck(shuffle(DATA[group]));
     setFlipped(false);
+    setAudioError(false);
   };
 
   return (
     <div className="space-y-4">
+      {/* Group picker */}
+      <div className="flex gap-1 bg-stone-100 rounded-xl p-1">
+        {(['consonants', 'vowels'] as Group[]).map((g) => (
+          <button
+            key={g}
+            onClick={() => switchGroup(g)}
+            className={cn(
+              'flex-1 py-2 text-xs font-bold rounded-lg transition-all',
+              group === g
+                ? 'bg-white text-teal-600 shadow-sm'
+                : 'text-stone-400 hover:text-stone-600'
+            )}
+          >
+            {g === 'consonants' ? `Consonnes (${CONSONANTS.length})` : `Voyelles (${VOWELS.length})`}
+          </button>
+        ))}
+      </div>
+
       {/* Progress */}
       <div className="flex items-center justify-between px-1">
         <span className="text-xs font-semibold text-stone-500">
-          {learnedCount} / {total} consonnes apprises
+          {learnedCount} / {total} {group === 'consonants' ? 'consonnes' : 'voyelles'} apprises
         </span>
         {learnedCount > 0 && (
           <button
@@ -107,7 +169,7 @@ export function AlphabetSection() {
           <div>
             <p className="text-2xl font-bold text-stone-800">Bravo ! 🎉</p>
             <p className="text-stone-500 mt-1 text-sm">
-              Tu connais les {total} consonnes khmères !
+              Tu connais les {total} {group === 'consonants' ? 'consonnes' : 'voyelles'} khmères !
             </p>
           </div>
           <button
@@ -152,11 +214,17 @@ export function AlphabetSection() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleCardSpeak(); }}
                       disabled={isPlaying}
-                      className="p-2 bg-white/70 rounded-full text-teal-600 hover:bg-white transition-all disabled:opacity-50"
+                      title={audioError ? 'Audio non disponible pour ce mot' : 'Écouter'}
+                      className={`p-2 bg-white/70 rounded-full hover:bg-white transition-all disabled:opacity-50 ${audioError ? 'text-stone-400' : 'text-teal-600'}`}
                     >
-                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : audioError ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                   </div>
+                  {current.note && (
+                    <p className="text-[10px] text-teal-600 bg-teal-50 rounded-lg px-2 py-0.5 italic">
+                      {current.note}
+                    </p>
+                  )}
                   {current.example && (
                     <div className="bg-white/70 rounded-2xl px-5 py-3 w-full text-center space-y-1 mt-1">
                       <p className="khmer-text text-xl text-stone-700">{current.example.kh}</p>

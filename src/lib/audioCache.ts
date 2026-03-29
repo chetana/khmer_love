@@ -57,6 +57,7 @@ export function getAudioCache(text: string, lang: 'kh' | 'fr'): string | null {
 }
 
 export function setAudioCache(text: string, lang: 'kh' | 'fr', data: string) {
+  if (!data) return; // Never cache empty audio
   memCache.set(cacheKey(text, lang), data);
   saveLS();
 }

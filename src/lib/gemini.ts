@@ -66,6 +66,17 @@ export async function translate(
   return JSON.parse(getText(response) || '{}');
 }
 
+function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!window.speechSynthesis) { reject(new Error('no web speech')); return; }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === 'kh' ? 'km-KH' : 'fr-FR';
+    utterance.onend = () => resolve();
+    utterance.onerror = (e) => reject(new Error(e.error));
+    window.speechSynthesis.speak(utterance);
+  });
+}
+
 function playBase64Pcm(base64Audio: string): Promise<void> {
   const audioData = atob(base64Audio);
   const pcmBuffer = new ArrayBuffer(audioData.length);
@@ -91,21 +102,26 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
   const cached = getAudioCache(cleanText, lang);
   if (cached) return playBase64Pcm(cached);
 
-  const response = await callGemini('gemini-2.5-flash-preview-tts', {
-    contents: [{ parts: [{ text: `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}` }] }],
-    generationConfig: {
-      responseModalities: ['AUDIO'],
-      speechConfig: {
-        voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' } },
+  try {
+    const response = await callGemini('gemini-2.5-flash-preview-tts', {
+      contents: [{ parts: [{ text: `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}` }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: lang === 'kh' ? 'Kore' : 'Zephyr' } },
+        },
       },
-    },
-  });
+    });
 
-  const base64Audio = response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) throw new Error('No audio data returned');
+    const base64Audio = response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) throw new Error('No audio data returned');
 
-  setAudioCache(cleanText, lang, base64Audio);
-  return playBase64Pcm(base64Audio);
+    setAudioCache(cleanText, lang, base64Audio);
+    return playBase64Pcm(base64Audio);
+  } catch {
+    // Fallback: use browser's built-in speech synthesis (no API needed)
+    return speakWebSpeech(cleanText, lang);
+  }
 }
 
 export async function generateWordOfDay(force = false): Promise<WordOfDay> {
