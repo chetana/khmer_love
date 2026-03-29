@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
 import { NUMBERS } from '../../../data/numbers';
 import type { KhmerNumber } from '../../../data/numbers';
+import { speak } from '../../../lib/gemini';
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -22,22 +23,32 @@ function saveLearned(learned: Set<string>) {
   } catch {}
 }
 
-interface NumbersSectionProps {
-  isSpeaking: boolean;
-  onSpeak: (text: string, lang: 'kh' | 'fr') => void;
-}
-
-export function NumbersSection({ isSpeaking, onSpeak }: NumbersSectionProps) {
+// No props needed — manages its own audio state to avoid App's generic error toast
+export function NumbersSection() {
   const [learned, setLearned] = useState<Set<string>>(loadLearned);
   const [deck, setDeck] = useState<KhmerNumber[]>(() => {
     const l = loadLearned();
     return shuffle(NUMBERS.filter((n) => !l.has(n.digit)));
   });
   const [flipped, setFlipped] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const current = deck[0] ?? null;
   const learnedCount = learned.size;
   const total = NUMBERS.length;
+
+  // Speak the Khmer WORD (e.g. "មួយ") not the glyph ("១") — much more reliable for TTS
+  const handleCardSpeak = async () => {
+    if (!current || isPlaying) return;
+    setIsPlaying(true);
+    try {
+      await speak(current.word, 'kh');
+    } catch {
+      // Silent fail — no toast
+    } finally {
+      setIsPlaying(false);
+    }
+  };
 
   const markLearned = () => {
     if (!current) return;
@@ -147,11 +158,11 @@ export function NumbersSection({ isSpeaking, onSpeak }: NumbersSectionProps) {
                   <div className="flex items-center gap-3">
                     <p className="text-xl font-mono text-stone-500 italic">{current.phon}</p>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onSpeak(current.digit, 'kh'); }}
-                      disabled={isSpeaking}
+                      onClick={(e) => { e.stopPropagation(); handleCardSpeak(); }}
+                      disabled={isPlaying}
                       className="p-2 bg-white/70 rounded-full text-amber-600 hover:bg-white transition-all disabled:opacity-50"
                     >
-                      {isSpeaking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                   </div>
                   {current.hint && (

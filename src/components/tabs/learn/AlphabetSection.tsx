@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Check, RefreshCw, Trophy, Volume2, Loader2 } from 'lucide-react';
 import { CONSONANTS } from '../../../data/alphabet';
 import type { AlphabetChar } from '../../../data/alphabet';
+import { speak } from '../../../lib/gemini';
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -22,22 +23,32 @@ function saveLearned(learned: Set<string>) {
   } catch {}
 }
 
-interface AlphabetSectionProps {
-  isSpeaking: boolean;
-  onSpeak: (text: string, lang: 'kh' | 'fr') => void;
-}
-
-export function AlphabetSection({ isSpeaking, onSpeak }: AlphabetSectionProps) {
+// No props needed — manages its own audio state to avoid App's generic error toast
+export function AlphabetSection() {
   const [learned, setLearned] = useState<Set<string>>(loadLearned);
   const [deck, setDeck] = useState<AlphabetChar[]>(() => {
     const l = loadLearned();
     return shuffle(CONSONANTS.filter((c) => !l.has(c.char)));
   });
   const [flipped, setFlipped] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const current = deck[0] ?? null;
   const learnedCount = learned.size;
   const total = CONSONANTS.length;
+
+  const handleCardSpeak = async () => {
+    if (!current || isPlaying) return;
+    const text = current.example?.kh ?? current.char;
+    setIsPlaying(true);
+    try {
+      await speak(text, 'kh');
+    } catch {
+      // Silent fail — some rare consonants may not TTS well; no toast shown
+    } finally {
+      setIsPlaying(false);
+    }
+  };
 
   const markLearned = () => {
     if (!current) return;
@@ -139,11 +150,11 @@ export function AlphabetSection({ isSpeaking, onSpeak }: AlphabetSectionProps) {
                   <div className="flex items-center gap-3">
                     <p className="text-2xl font-bold text-stone-800 font-mono">/{current.phon}/</p>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onSpeak(current.example?.kh ?? current.char, 'kh'); }}
-                      disabled={isSpeaking}
+                      onClick={(e) => { e.stopPropagation(); handleCardSpeak(); }}
+                      disabled={isPlaying}
                       className="p-2 bg-white/70 rounded-full text-teal-600 hover:bg-white transition-all disabled:opacity-50"
                     >
-                      {isSpeaking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
+                      {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                   </div>
                   {current.example && (
