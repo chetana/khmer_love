@@ -1,72 +1,19 @@
 /**
- * Audio cache: keeps generated TTS audio in memory (session) + localStorage (persistent).
- * Avoids re-generating the same audio with Gemini on every play.
- *
- * iOS Safari localStorage limit = 5 MB total.
- * Each PCM base64 entry = ~100-200 KB → max 10 entries in localStorage (~1-2 MB safe).
- * In-memory cache has no limit (session only).
+ * Audio cache: in-memory only (session).
+ * Avoids re-calling Gemini TTS for the same text during a session.
+ * NOT persisted to localStorage — iOS Safari 5MB quota causes crashes.
+ * Cache is cleared on every page load.
  */
 
-const MAX_PERSISTENT = 10;
 const LS_KEY = 'khmer_audio_cache_v1';
 
-interface CacheEntry {
-  key: string;
-  data: string; // base64 PCM
-  ts: number;
-}
-
-// In-memory map (session) — fast access, no size limit
+// In-memory map — session only, cleared on reload
 const memCache = new Map<string, string>();
 
-function loadLS(): Map<string, string> {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return new Map();
-    const entries: CacheEntry[] = JSON.parse(raw);
-    return new Map(entries.map((e) => [e.key, e.data]));
-  } catch {
-    // Corrupted cache — clear it
-    try { localStorage.removeItem(LS_KEY); } catch {}
-    return new Map();
-  }
-}
-
-function saveLS() {
-  try {
-    const entries: CacheEntry[] = [...memCache.entries()]
-      .slice(-MAX_PERSISTENT)
-      .map(([key, data]) => ({ key, data, ts: Date.now() }));
-    localStorage.setItem(LS_KEY, JSON.stringify(entries));
-  } catch {
-    // QuotaExceeded — reduce cache size and retry
-    try {
-      const smaller = [...memCache.entries()]
-        .slice(-5)
-        .map(([key, data]) => ({ key, data, ts: Date.now() }));
-      localStorage.setItem(LS_KEY, JSON.stringify(smaller));
-    } catch {
-      // Still too big — just clear audio cache entirely
-      try { localStorage.removeItem(LS_KEY); } catch {}
-    }
-  }
-}
-
-// Version check — purge old oversized cache on upgrade
-const CACHE_VERSION_KEY = 'khmer_audio_cache_version';
-const CACHE_VERSION = 2; // bump to force purge on next load
-
-(function hydrate() {
-  try {
-    const v = Number(localStorage.getItem(CACHE_VERSION_KEY) || '0');
-    if (v < CACHE_VERSION) {
-      // Purge old cache (was 30 entries, too big for iOS 5MB limit)
-      localStorage.removeItem(LS_KEY);
-      localStorage.setItem(CACHE_VERSION_KEY, String(CACHE_VERSION));
-      return; // fresh start, nothing to hydrate
-    }
-  } catch {}
-  loadLS().forEach((data, key) => memCache.set(key, data));
+// Purge any leftover localStorage cache from older versions
+(function purgeOnStart() {
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  try { localStorage.removeItem('khmer_audio_cache_version'); } catch {}
 })();
 
 function cacheKey(text: string, lang: 'kh' | 'fr'): string {
@@ -80,5 +27,4 @@ export function getAudioCache(text: string, lang: 'kh' | 'fr'): string | null {
 export function setAudioCache(text: string, lang: 'kh' | 'fr', data: string) {
   if (!data) return;
   memCache.set(cacheKey(text, lang), data);
-  saveLS();
 }
