@@ -237,12 +237,14 @@ Question : ${question}`,
   return getText(response).trim() || 'Désolé, je n\'ai pas pu répondre à cette question.';
 }
 
-export async function generateFamilyVocab(): Promise<Array<{ fr: string; kh: string; phon: string }>> {
-  const response = await callGemini('gemini-3-flash-preview', {
-    contents: [{ parts: [{ text: `Génère exactement 15 expressions utiles pour parler avec sa famille cambodgienne.
+export async function generateFamilyVocab(customPrompt?: string): Promise<Array<{ fr: string; kh: string; phon: string }>> {
+  const defaultPrompt = `Génère exactement 15 expressions utiles pour parler avec sa famille cambodgienne.
 Inclus : formules d'affection, questions du quotidien (manger, dormir, santé), expressions de respect, félicitations, réconfort.
 Varie les registres (formel/informel). Chaque expression doit être naturelle et couramment utilisée.
-Réponds UNIQUEMENT en JSON valide : [{"fr": "...", "kh": "...", "phon": "..."}]` }] }],
+Réponds UNIQUEMENT en JSON valide : [{"fr": "...", "kh": "...", "phon": "..."}]`;
+
+  const response = await callGemini('gemini-3-flash-preview', {
+    contents: [{ parts: [{ text: customPrompt ?? defaultPrompt }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
   const raw = getText(response);

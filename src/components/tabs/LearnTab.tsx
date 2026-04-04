@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Play, Loader2, RotateCcw, ChevronRight, Check, X, Sparkles, Trophy } from 'lucide-react';
+import { Play, Loader2, RotateCcw, ChevronRight, Check, X, Sparkles, Trophy, List, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { WordOfDay } from '../../types';
 import { generateFamilyVocab } from '../../lib/gemini';
 import { cn } from '../../lib/utils';
 import { AlphabetSection } from './learn/AlphabetSection';
+import { AlphabetReference } from './learn/AlphabetReference';
 import { NumbersSection } from './learn/NumbersSection';
+import { NumbersReference } from './learn/NumbersReference';
 
 interface LearnTabProps {
   wordOfDay: WordOfDay | null;
@@ -30,6 +32,23 @@ function buildChoices(correct: VocabCard, all: VocabCard[]): VocabCard[] {
 
 type QuizState = 'idle' | 'loading' | 'playing' | 'answered' | 'complete';
 type Section = 'vocab' | 'alpha' | 'numbers';
+type Difficulty = 'easy' | 'daily' | 'hard';
+type ViewMode = 'learn' | 'reference';
+
+const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; emoji: string; count: number; prompt: string }> = {
+  easy: {
+    label: 'Facile', emoji: '🌱', count: 5,
+    prompt: 'Génère exactement 8 expressions SIMPLES et courtes pour parler avec sa famille cambodgienne. Mots simples du quotidien (bonjour, merci, manger, dormir, bien, oui, non). Réponds en JSON: [{"fr":"...","kh":"...","phon":"..."}]',
+  },
+  daily: {
+    label: 'Quotidien', emoji: '☀️', count: 10,
+    prompt: 'Génère exactement 15 expressions utiles pour parler avec sa famille cambodgienne. Inclus : formules d\'affection, questions du quotidien (manger, dormir, santé), expressions de respect. Réponds en JSON: [{"fr":"...","kh":"...","phon":"..."}]',
+  },
+  hard: {
+    label: 'Difficile', emoji: '🔥', count: 15,
+    prompt: 'Génère exactement 20 expressions AVANCÉES pour parler avec sa famille cambodgienne. Inclus : proverbes, expressions idiomatiques, formules de politesse complexes, vocabulaire culturel (Pchum Ben, mariage, temple). Réponds en JSON: [{"fr":"...","kh":"...","phon":"..."}]',
+  },
+};
 
 function loadSection(): Section {
   try {
@@ -41,6 +60,8 @@ function loadSection(): Section {
 
 export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
   const [section, setSection] = useState<Section>(loadSection);
+  const [viewMode, setViewMode] = useState<ViewMode>('learn');
+  const [difficulty, setDifficulty] = useState<Difficulty>('daily');
   const [quizState, setQuizState] = useState<QuizState>('idle');
   const [cards, setCards] = useState<VocabCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -51,20 +72,23 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
 
   const handleSectionChange = (s: Section) => {
     setSection(s);
+    setViewMode('learn');
     try { localStorage.setItem('khmer_learn_section', s); } catch {}
   };
+
+  const config = DIFFICULTY_CONFIG[difficulty];
 
   const startQuiz = async () => {
     setQuizState('loading');
     setError(null);
     try {
-      const vocab = await generateFamilyVocab();
+      const vocab = await generateFamilyVocab(config.prompt);
       if (!vocab || vocab.length < 4) {
         setError('Impossible de générer le quiz. Vérifie ta connexion.');
         setQuizState('idle');
         return;
       }
-      const shuffled = shuffle(vocab).slice(0, Math.min(10, vocab.length));
+      const shuffled = shuffle(vocab).slice(0, Math.min(config.count, vocab.length));
       setCards(shuffled);
       setCurrentIdx(0);
       setScore(0);
@@ -121,45 +145,64 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 : 'text-stone-400 hover:text-stone-600'
             )}
           >
-            {s === 'vocab' ? '📖 Vocabulaire' : s === 'alpha' ? '🔤 Alphabet' : '🔢 Chiffres'}
+            {s === 'vocab' ? '📖 Vocab' : s === 'alpha' ? '🔤 Alphabet' : '🔢 Chiffres'}
           </button>
         ))}
       </div>
 
-      {/* Word of the Day — only on vocab section */}
-      {section === 'vocab' && wordOfDay && (
-        <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-[32px] p-8 text-white shadow-xl shadow-teal-200 relative overflow-hidden">
-          <Sparkles className="absolute -top-4 -right-4 w-24 h-24 opacity-10" />
-          <span className="text-[10px] uppercase font-bold tracking-widest opacity-70">
-            Expression du jour
-          </span>
-          <div className="mt-4 space-y-2">
-            <h3 className="text-3xl font-bold serif-text">{wordOfDay.fr}</h3>
-            <p className="khmer-text text-4xl mt-4">{wordOfDay.kh}</p>
-            <p className="text-sm opacity-80 italic">{wordOfDay.phon}</p>
-          </div>
+      {/* View mode toggle for alphabet & numbers */}
+      {(section === 'alpha' || section === 'numbers') && (
+        <div className="flex gap-1 bg-stone-50 rounded-xl p-1">
           <button
-            onClick={() => onSpeak(wordOfDay.kh, 'kh')}
-            disabled={isSpeaking}
-            className="mt-6 p-4 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all disabled:opacity-60"
+            onClick={() => setViewMode('learn')}
+            className={cn('flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5',
+              viewMode === 'learn' ? 'bg-white text-teal-600 shadow-sm' : 'text-stone-400'
+            )}
           >
-            {isSpeaking
-              ? <Loader2 className="w-6 h-6 animate-spin" />
-              : <Play className="w-6 h-6 fill-current" />
-            }
+            <Layers className="w-3.5 h-3.5" /> Flashcards
+          </button>
+          <button
+            onClick={() => setViewMode('reference')}
+            className={cn('flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5',
+              viewMode === 'reference' ? 'bg-white text-teal-600 shadow-sm' : 'text-stone-400'
+            )}
+          >
+            <List className="w-3.5 h-3.5" /> Référence
           </button>
         </div>
       )}
 
-      {/* Alphabet section */}
-      {section === 'alpha' && <AlphabetSection />}
+      {/* Alphabet */}
+      {section === 'alpha' && (viewMode === 'learn' ? <AlphabetSection /> : <AlphabetReference />)}
 
-      {/* Numbers section */}
-      {section === 'numbers' && <NumbersSection />}
+      {/* Numbers */}
+      {section === 'numbers' && (viewMode === 'learn' ? <NumbersSection /> : <NumbersReference />)}
 
-      {/* Quiz Section — only on vocab */}
+      {/* Quiz Section — vocab only */}
       {section === 'vocab' && (
         <div className="space-y-4">
+          {/* Difficulty selector */}
+          {(quizState === 'idle' || quizState === 'complete') && (
+            <div className="flex gap-2">
+              {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof config][]).map(([key, cfg]) => (
+                <button
+                  key={key}
+                  onClick={() => setDifficulty(key)}
+                  className={cn(
+                    'flex-1 py-3 rounded-2xl border-2 text-center transition-all',
+                    difficulty === key
+                      ? 'border-teal-400 bg-teal-50 text-teal-700'
+                      : 'border-stone-100 bg-white text-stone-400 hover:border-stone-200'
+                  )}
+                >
+                  <span className="text-lg block">{cfg.emoji}</span>
+                  <span className="text-xs font-bold block mt-1">{cfg.label}</span>
+                  <span className="text-[10px] text-stone-400 block">{cfg.count} cartes</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center justify-between px-2">
             <h3 className="text-[10px] uppercase tracking-widest font-bold text-stone-400">
               Quiz vocabulaire
@@ -183,7 +226,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               >
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <p className="text-stone-500 text-sm">
-                  Je génère 10 expressions de la famille khmère.
+                  {config.emoji} {config.count} expressions de la famille khmère.
                   <br />
                   Tu vois le mot en khmer, trouve la bonne traduction !
                 </p>
@@ -206,7 +249,7 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
                 className="bg-white rounded-3xl border border-stone-100 shadow-sm p-12 text-center space-y-4"
               >
                 <Sparkles className="w-10 h-10 mx-auto text-teal-400 animate-spin" />
-                <p className="text-stone-400 text-sm">Je prépare ton quiz...</p>
+                <p className="text-stone-400 text-sm">Je prépare ton quiz {config.emoji}...</p>
               </motion.div>
             )}
 
@@ -310,6 +353,31 @@ export function LearnTab({ wordOfDay, isSpeaking, onSpeak }: LearnTabProps) {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Word of the Day — en bas de la section vocab */}
+      {section === 'vocab' && wordOfDay && (
+        <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-[32px] p-6 text-white shadow-lg relative overflow-hidden">
+          <Sparkles className="absolute -top-4 -right-4 w-24 h-24 opacity-10" />
+          <span className="text-[10px] uppercase font-bold tracking-widest opacity-70">
+            Expression du jour
+          </span>
+          <div className="mt-3 space-y-1">
+            <h3 className="text-2xl font-bold serif-text">{wordOfDay.fr}</h3>
+            <p className="khmer-text text-3xl mt-2">{wordOfDay.kh}</p>
+            <p className="text-sm opacity-80 italic">{wordOfDay.phon}</p>
+          </div>
+          <button
+            onClick={() => onSpeak(wordOfDay.kh, 'kh')}
+            disabled={isSpeaking}
+            className="mt-4 p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all disabled:opacity-60"
+          >
+            {isSpeaking
+              ? <Loader2 className="w-5 h-5 animate-spin" />
+              : <Play className="w-5 h-5 fill-current" />
+            }
+          </button>
         </div>
       )}
     </motion.div>
