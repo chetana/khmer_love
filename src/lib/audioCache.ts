@@ -2,11 +2,12 @@
  * Audio cache: keeps generated TTS audio in memory (session) + localStorage (persistent).
  * Avoids re-generating the same audio with Gemini on every play.
  *
- * Format: raw PCM base64 string (before WAV header), keyed by "lang::text".
- * Max 30 persistent entries (~3-5 MB), LRU eviction.
+ * iOS Safari localStorage limit = 5 MB total.
+ * Each PCM base64 entry = ~100-200 KB → max 10 entries in localStorage (~1-2 MB safe).
+ * In-memory cache has no limit (session only).
  */
 
-const MAX_PERSISTENT = 30;
+const MAX_PERSISTENT = 10;
 const LS_KEY = 'khmer_audio_cache_v1';
 
 interface CacheEntry {
@@ -15,10 +16,9 @@ interface CacheEntry {
   ts: number;
 }
 
-// In-memory map (session) — fast access, no size limit concern
+// In-memory map (session) — fast access, no size limit
 const memCache = new Map<string, string>();
 
-// Load from localStorage on startup
 function loadLS(): Map<string, string> {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -26,11 +26,12 @@ function loadLS(): Map<string, string> {
     const entries: CacheEntry[] = JSON.parse(raw);
     return new Map(entries.map((e) => [e.key, e.data]));
   } catch {
+    // Corrupted cache — clear it
+    try { localStorage.removeItem(LS_KEY); } catch {}
     return new Map();
   }
 }
 
-// Persist current memCache state (capped to MAX_PERSISTENT entries)
 function saveLS() {
   try {
     const entries: CacheEntry[] = [...memCache.entries()]
@@ -38,14 +39,22 @@ function saveLS() {
       .map(([key, data]) => ({ key, data, ts: Date.now() }));
     localStorage.setItem(LS_KEY, JSON.stringify(entries));
   } catch {
-    // Silently skip if localStorage is full
+    // QuotaExceeded — reduce cache size and retry
+    try {
+      const smaller = [...memCache.entries()]
+        .slice(-5)
+        .map(([key, data]) => ({ key, data, ts: Date.now() }));
+      localStorage.setItem(LS_KEY, JSON.stringify(smaller));
+    } catch {
+      // Still too big — just clear audio cache entirely
+      try { localStorage.removeItem(LS_KEY); } catch {}
+    }
   }
 }
 
-// Hydrate in-memory cache from localStorage on module load
+// Hydrate from localStorage on startup
 (function hydrate() {
-  const ls = loadLS();
-  ls.forEach((data, key) => memCache.set(key, data));
+  loadLS().forEach((data, key) => memCache.set(key, data));
 })();
 
 function cacheKey(text: string, lang: 'kh' | 'fr'): string {
@@ -57,7 +66,7 @@ export function getAudioCache(text: string, lang: 'kh' | 'fr'): string | null {
 }
 
 export function setAudioCache(text: string, lang: 'kh' | 'fr', data: string) {
-  if (!data) return; // Never cache empty audio
+  if (!data) return;
   memCache.set(cacheKey(text, lang), data);
   saveLS();
 }

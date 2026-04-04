@@ -97,8 +97,6 @@ function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
 }
 
 async function playBase64Pcm(base64Audio: string): Promise<void> {
-  const ctx = getAudioCtx();
-  if (ctx.state === 'suspended') await ctx.resume();
   const audioData = atob(base64Audio);
   const pcmLen = audioData.length;
   const pcmBuffer = new Uint8Array(pcmLen);
@@ -107,11 +105,28 @@ async function playBase64Pcm(base64Audio: string): Promise<void> {
   const wavBytes = new Uint8Array(44 + pcmLen);
   wavBytes.set(header, 0);
   wavBytes.set(pcmBuffer, 44);
-  const audioBuffer = await ctx.decodeAudioData(wavBytes.buffer);
-  const source = ctx.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(ctx.destination);
-  return new Promise((resolve) => { source.onended = () => resolve(); source.start(0); });
+
+  // Essai 1 : AudioContext (meilleur, mais peut échouer sur iOS)
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') await ctx.resume();
+    // .slice() crée une copie propre — évite le bug "detached ArrayBuffer" sur iOS Safari
+    const audioBuffer = await ctx.decodeAudioData(wavBytes.buffer.slice(0));
+    const source = ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(ctx.destination);
+    return new Promise((resolve) => { source.onended = () => resolve(); source.start(0); });
+  } catch {
+    // Essai 2 : fallback Blob + Audio element
+    const blob = new Blob([wavBytes], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    return new Promise((resolve, reject) => {
+      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
+      audio.play().catch(reject);
+    });
+  }
 }
 
 export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
