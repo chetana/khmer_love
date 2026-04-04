@@ -104,10 +104,22 @@ function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis) { reject(new Error('no web speech')); return; }
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'kh' ? 'km-KH' : 'fr-FR';
+    // Essayer la langue demandée, puis fallback sur des alternatives
+    const langs = lang === 'kh'
+      ? ['km-KH', 'km', 'th-TH', 'th'] // Khmer → Thai (prononciation proche)
+      : ['fr-FR', 'fr'];
+    utterance.lang = langs[0];
+    // Chercher une voix installée pour cette langue
+    const voices = window.speechSynthesis.getVoices();
+    for (const l of langs) {
+      const voice = voices.find(v => v.lang.startsWith(l.split('-')[0]));
+      if (voice) { utterance.voice = voice; utterance.lang = voice.lang; break; }
+    }
     utterance.onend = () => resolve();
-    utterance.onerror = (e) => reject(new Error(e.error));
+    utterance.onerror = () => resolve(); // Ne pas rejeter — mieux que rien
     window.speechSynthesis.speak(utterance);
+    // iOS Safari bug: onend never fires sometimes → timeout
+    setTimeout(() => resolve(), 10000);
   });
 }
 
