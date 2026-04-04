@@ -13,6 +13,7 @@ import { useToast } from './hooks/useToast';
 import { useFavorites } from './hooks/useFavorites';
 import { ToastContainer } from './components/Toast';
 import { NavButton } from './components/NavButton';
+import { APP_VERSION } from './version';
 import { Header } from './components/Header';
 import { RelationshipPicker } from './components/RelationshipPicker';
 import { TranslateTab } from './components/tabs/TranslateTab';
@@ -150,7 +151,8 @@ export default function App() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/80 backdrop-blur-xl border-t border-stone-100 px-6 py-4 flex justify-between items-center z-40">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/80 backdrop-blur-xl border-t border-stone-100 px-6 pt-4 pb-2 flex flex-col items-center z-40">
+        <div className="flex justify-between items-center w-full">
         <NavButton
           active={activeTab === 'translate'}
           onClick={() => setActiveTab('translate')}
@@ -175,6 +177,8 @@ export default function App() {
           icon={<Lightbulb className="w-6 h-6" />}
           label="Guide"
         />
+        </div>
+        <span className="text-[0.55rem] font-mono text-stone-300 mt-1">v{APP_VERSION}</span>
       </nav>
     </div>
   );
