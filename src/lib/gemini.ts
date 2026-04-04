@@ -187,7 +187,8 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
 
     setAudioCache(cleanText, lang, base64Audio);
     return playBase64Pcm(base64Audio);
-  } catch {
+  } catch (err) {
+    console.error('[speak] Gemini TTS failed:', err instanceof Error ? err.message : err, '| text:', cleanText, '| lang:', lang);
     // Fallback: use browser's built-in speech synthesis (no API needed)
     return speakWebSpeech(cleanText, lang);
   }

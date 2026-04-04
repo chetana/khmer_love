@@ -18,6 +18,11 @@ app.post('/api/gemini', express.json({ limit: '20mb' }), async (req, res) => {
   const { model, ...body } = req.body;
   if (!model) return res.status(400).json({ error: 'model is required' });
 
+  // Log TTS requests for debugging iOS audio issues
+  const isTTS = body.generationConfig?.responseModalities?.includes('AUDIO');
+  const ttsText = isTTS ? body.contents?.[0]?.parts?.[0]?.text : null;
+  if (isTTS) console.log(`[TTS] model=${model} text="${ttsText}"`);
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   try {
@@ -30,9 +35,18 @@ app.post('/api/gemini', express.json({ limit: '20mb' }), async (req, res) => {
       body: JSON.stringify(body),
     });
     const data = await geminiRes.json();
+
+    if (isTTS) {
+      const audioData = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const audioLen = audioData ? audioData.length : 0;
+      const finishReason = data?.candidates?.[0]?.finishReason;
+      const error = data?.error;
+      console.log(`[TTS] status=${geminiRes.status} finishReason=${finishReason} audioBytes=${audioLen} error=${error ? JSON.stringify(error) : 'none'}`);
+    }
+
     res.status(geminiRes.status).json(data);
   } catch (e) {
-    console.error('Gemini API error:', e);
+    console.error('[TTS] Gemini API error:', e);
     res.status(502).json({ error: 'Failed to reach Gemini API' });
   }
 });
