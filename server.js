@@ -13,38 +13,77 @@ if (!GEMINI_API_KEY) {
   process.exit(1);
 }
 
+// Helper: call Gemini and return { status, data }
+async function callGeminiAPI(model, body) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const geminiRes = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+    body: JSON.stringify(body),
+  });
+  return { status: geminiRes.status, data: await geminiRes.json() };
+}
+
+function getTTSAudio(data) {
+  return data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+}
+
+// Build an alternative TTS prompt that's harder for Gemini to return 0 bytes on
+function buildRetryPrompt(originalText) {
+  // Extract the actual text from various prompt formats
+  let text = originalText;
+  const wordMatch = text.match(/[""]([^""]+)[""]/);
+  const sayMatch = text.match(/say this text in (?:Khmer|French): (.+)$/i);
+  if (wordMatch) text = wordMatch[1];
+  else if (sayMatch) text = sayMatch[1];
+
+  return `You are a Khmer language teacher. Read this aloud for a student: "${text}". Pronounce it naturally at a moderate pace.`;
+}
+
 // Main Gemini API endpoint — called directly from the browser (no SDK, no service worker)
 app.post('/api/gemini', express.json({ limit: '20mb' }), async (req, res) => {
   const { model, ...body } = req.body;
   if (!model) return res.status(400).json({ error: 'model is required' });
 
-  // Log TTS requests for debugging iOS audio issues
   const isTTS = body.generationConfig?.responseModalities?.includes('AUDIO');
   const ttsText = isTTS ? body.contents?.[0]?.parts?.[0]?.text : null;
   if (isTTS) console.log(`[TTS] model=${model} text="${ttsText}"`);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
   try {
-    const geminiRes = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY,
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await geminiRes.json();
+    let { status, data } = await callGeminiAPI(model, body);
+    let audioData = isTTS ? getTTSAudio(data) : null;
 
     if (isTTS) {
-      const audioData = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      const audioLen = audioData ? audioData.length : 0;
       const finishReason = data?.candidates?.[0]?.finishReason;
-      const error = data?.error;
-      console.log(`[TTS] status=${geminiRes.status} finishReason=${finishReason} audioBytes=${audioLen} error=${error ? JSON.stringify(error) : 'none'}`);
+      console.log(`[TTS] attempt=1 status=${status} finishReason=${finishReason} audioBytes=${audioData?.length ?? 0}`);
+
+      // Retry up to 2 times with alternative prompts if we got 0 bytes
+      if (!audioData && ttsText && status === 200) {
+        for (let attempt = 2; attempt <= 3; attempt++) {
+          const retryPrompt = attempt === 2
+            ? buildRetryPrompt(ttsText)
+            : `Repeat after me in Khmer language, speak clearly: ${ttsText.replace(/^.*?[:：]\s*/, '')}`;
+
+          console.log(`[TTS] retry attempt=${attempt} prompt="${retryPrompt}"`);
+          const retryBody = {
+            ...body,
+            contents: [{ parts: [{ text: retryPrompt }] }],
+          };
+          const retry = await callGeminiAPI(model, retryBody);
+          audioData = getTTSAudio(retry.data);
+          const retryFinish = retry.data?.candidates?.[0]?.finishReason;
+          console.log(`[TTS] attempt=${attempt} status=${retry.status} finishReason=${retryFinish} audioBytes=${audioData?.length ?? 0}`);
+
+          if (audioData) {
+            data = retry.data;
+            status = retry.status;
+            break;
+          }
+        }
+      }
     }
 
-    res.status(geminiRes.status).json(data);
+    res.status(status).json(data);
   } catch (e) {
     console.error('[TTS] Gemini API error:', e);
     res.status(502).json({ error: 'Failed to reach Gemini API' });

@@ -172,13 +172,12 @@ export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
   if (cached) return playBase64Pcm(cached);
 
   try {
-    // Gemini TTS returns 0 bytes for very short/isolated text (single Khmer chars).
-    // Wrap short text in a carrier phrase so the model has enough context to generate audio.
-    const ttsPrompt = cleanText.length <= 6
-      ? (lang === 'kh'
-        ? `Please say this Khmer word clearly and slowly: "${cleanText}". Only say the word, nothing else.`
-        : `Please say this French word clearly and slowly: "${cleanText}". Only say the word, nothing else.`)
-      : `Please say this text in ${lang === 'kh' ? 'Khmer' : 'French'}: ${cleanText}`;
+    // Gemini TTS often returns 0 bytes (finishReason=OTHER) for Khmer text.
+    // Always use a richer carrier prompt — the server retries with alternatives if still 0 bytes.
+    const langName = lang === 'kh' ? 'Khmer' : 'French';
+    const ttsPrompt = cleanText.length <= 12
+      ? `You are a ${langName} language teacher. Please pronounce this word clearly and at a moderate pace: "${cleanText}".`
+      : `You are a ${langName} language teacher. Please read this aloud naturally: "${cleanText}".`;
 
     const response = await callGemini('gemini-2.5-flash-preview-tts', {
       contents: [{ parts: [{ text: ttsPrompt }] }],
