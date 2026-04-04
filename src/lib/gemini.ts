@@ -72,10 +72,17 @@ function getAudioCtx(): AudioContext {
   return _audioCtx;
 }
 
-// Call this synchronously inside an onClick handler to unlock audio on iOS Safari.
+// Call synchronously in onClick to unlock audio on iOS Safari.
+// Plays a tiny silent buffer to keep the AudioContext active through async operations.
 export function ensureAudioUnlocked(): void {
   const ctx = getAudioCtx();
   if (ctx.state === 'suspended') ctx.resume();
+  // Play silent buffer — keeps iOS from re-suspending during async fetch
+  const silent = ctx.createBuffer(1, 1, 22050);
+  const src = ctx.createBufferSource();
+  src.buffer = silent;
+  src.connect(ctx.destination);
+  src.start(0);
 }
 
 function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
