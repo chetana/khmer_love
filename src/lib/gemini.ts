@@ -68,21 +68,36 @@ export async function translate(
 
 let _audioCtx: AudioContext | null = null;
 function getAudioCtx(): AudioContext {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (!_audioCtx) {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    // Force 24000 Hz to match Gemini TTS output — iOS Safari rejects mismatched sample rates
+    try { _audioCtx = new Ctx({ sampleRate: 24000 }); }
+    catch { _audioCtx = new Ctx(); }
+  }
   return _audioCtx;
 }
 
+// Pre-created Audio element for iOS fallback (must be created in gesture context)
+let _iosAudio: HTMLAudioElement | null = null;
+
 // Call synchronously in onClick to unlock audio on iOS Safari.
-// Plays a tiny silent buffer to keep the AudioContext active through async operations.
 export function ensureAudioUnlocked(): void {
   const ctx = getAudioCtx();
   if (ctx.state === 'suspended') ctx.resume();
-  // Play silent buffer — keeps iOS from re-suspending during async fetch
-  const silent = ctx.createBuffer(1, 1, 22050);
+  // Silent buffer keeps iOS AudioContext alive during async fetch
+  const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
   const src = ctx.createBufferSource();
   src.buffer = silent;
   src.connect(ctx.destination);
   src.start(0);
+  // Also pre-create an Audio element in gesture context for iOS fallback
+  if (!_iosAudio) {
+    _iosAudio = new Audio();
+    _iosAudio.volume = 0.01;
+    _iosAudio.play().catch(() => {});
+    _iosAudio.pause();
+    _iosAudio.volume = 1;
+  }
 }
 
 function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
@@ -96,7 +111,7 @@ function speakWebSpeech(text: string, lang: 'kh' | 'fr'): Promise<void> {
   });
 }
 
-async function playBase64Pcm(base64Audio: string): Promise<void> {
+function buildWav(base64Audio: string): Uint8Array {
   const audioData = atob(base64Audio);
   const pcmLen = audioData.length;
   const pcmBuffer = new Uint8Array(pcmLen);
@@ -105,28 +120,33 @@ async function playBase64Pcm(base64Audio: string): Promise<void> {
   const wavBytes = new Uint8Array(44 + pcmLen);
   wavBytes.set(header, 0);
   wavBytes.set(pcmBuffer, 44);
+  return wavBytes;
+}
 
-  // Essai 1 : AudioContext (meilleur, mais peut échouer sur iOS)
+async function playBase64Pcm(base64Audio: string): Promise<void> {
+  const wavBytes = buildWav(base64Audio);
+
+  // Essai 1 : AudioContext (best quality)
   try {
     const ctx = getAudioCtx();
     if (ctx.state === 'suspended') await ctx.resume();
-    // .slice() crée une copie propre — évite le bug "detached ArrayBuffer" sur iOS Safari
     const audioBuffer = await ctx.decodeAudioData(wavBytes.buffer.slice(0));
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(ctx.destination);
     return new Promise((resolve) => { source.onended = () => resolve(); source.start(0); });
-  } catch {
-    // Essai 2 : fallback Blob + Audio element
-    const blob = new Blob([wavBytes], { type: 'audio/wav' });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    return new Promise((resolve, reject) => {
-      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
-      audio.play().catch(reject);
-    });
-  }
+  } catch { /* fall through */ }
+
+  // Essai 2 : Audio element pré-créé dans le gesture (iOS friendly)
+  const blob = new Blob([wavBytes], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const audio = _iosAudio ?? new Audio();
+  audio.src = url;
+  return new Promise((resolve, reject) => {
+    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+    audio.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Audio playback failed')); };
+    audio.play().catch(reject);
+  });
 }
 
 export async function speak(text: string, lang: 'kh' | 'fr'): Promise<void> {
