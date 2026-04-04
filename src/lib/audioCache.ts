@@ -52,8 +52,20 @@ function saveLS() {
   }
 }
 
-// Hydrate from localStorage on startup
+// Version check — purge old oversized cache on upgrade
+const CACHE_VERSION_KEY = 'khmer_audio_cache_version';
+const CACHE_VERSION = 2; // bump to force purge on next load
+
 (function hydrate() {
+  try {
+    const v = Number(localStorage.getItem(CACHE_VERSION_KEY) || '0');
+    if (v < CACHE_VERSION) {
+      // Purge old cache (was 30 entries, too big for iOS 5MB limit)
+      localStorage.removeItem(LS_KEY);
+      localStorage.setItem(CACHE_VERSION_KEY, String(CACHE_VERSION));
+      return; // fresh start, nothing to hydrate
+    }
+  } catch {}
   loadLS().forEach((data, key) => memCache.set(key, data));
 })();
 
