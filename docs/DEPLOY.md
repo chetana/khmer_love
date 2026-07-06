@@ -9,7 +9,7 @@
 | Projet GCP | `cykt-399216` |
 | Image Docker | `gcr.io/cykt-399216/khmer-love-translator` |
 | URL prod | `https://khmer-love-translator-267131866578.us-west1.run.app` |
-| Domaine custom | `kh.chetana.dev` |
+| Domaine custom | `kh.chetana.fr` |
 
 ---
 

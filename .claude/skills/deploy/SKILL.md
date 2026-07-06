@@ -1,6 +1,6 @@
 # Deploy — khmer_love
 
-Déploie l'app kh.chetana.dev sur Cloud Run via Cloud Build.
+Déploie l'app kh.chetana.fr sur Cloud Run via Cloud Build.
 
 ## Steps
 
@@ -14,10 +14,10 @@ Déploie l'app kh.chetana.dev sur Cloud Run via Cloud Build.
 5. Attends la fin du build (SUCCESS/FAILURE dans les logs)
 6. Vérifie que le service répond :
    ```bash
-   curl -s -o /dev/null -w "%{http_code}" https://kh.chetana.dev
+   curl -s -o /dev/null -w "%{http_code}" https://kh.chetana.fr
    ```
    → Doit retourner 200. Sinon signaler l'erreur.
-7. Affiche l'URL finale : **kh.chetana.dev**
+7. Affiche l'URL finale : **kh.chetana.fr**
 
 ## Notes
 

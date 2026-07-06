@@ -3,8 +3,8 @@
 ## Identifiants
 
 - **Package name** : `dev.chetana.kh`
-- **URL privacyPolicy** : `https://kh.chetana.dev/privacy.html`
-- **URL site web** : `https://kh.chetana.dev`
+- **URL privacyPolicy** : `https://kh.chetana.fr/privacy.html`
+- **URL site web** : `https://kh.chetana.fr`
 - **Email contact** : `chetana@chetana.dev`
 - **Catégorie** : Éducation
 - **Classement contenu** : Tout public (3+)
@@ -103,7 +103,7 @@ Fond dégradé teal (#0F766E → #134e4a), texte blanc "Famille Khmère" en gran
 1. Créer compte développeur : https://play.google.com/console ($25 une fois)
 2. Nouvelle app → "Famille Khmère"
 3. Fiche du Play Store → coller les textes ci-dessus
-4. Politique de confidentialité → `https://kh.chetana.dev/privacy.html`
+4. Politique de confidentialité → `https://kh.chetana.fr/privacy.html`
 5. Contenu de l'app → "Pas pour les enfants" (ou "Tout public")
 6. Version → Upload AAB généré par PWABuilder
 7. Mettre à jour `assetlinks.json` avec l'empreinte SHA256 du keystore PWABuilder

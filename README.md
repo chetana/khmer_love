@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>🇰🇭 Bong & Oun — kh.chetana.dev</h1>
+  <h1>🇰🇭 Bong & Oun — kh.chetana.fr</h1>
   <p><strong>Apprendre le khmer pour communiquer avec sa famille cambodgienne</strong></p>
   <p>
-    <a href="https://kh.chetana.dev">🚀 Live</a> ·
+    <a href="https://kh.chetana.fr">🚀 Live</a> ·
     <a href="docs/ARCHITECTURE.md">Architecture</a> ·
     <a href="docs/DEPLOY.md">Deploy</a>
   </p>
