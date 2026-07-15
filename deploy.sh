@@ -1,38 +1,30 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Déploiement khmer-love → Scaleway Serverless Container.
+# build → push → update image → deploy → vérifie. Tag image = nombre de commits git.
+# Usage : bash deploy.sh
+set -euo pipefail
+cd "$(dirname "$0")"
 
-PROJECT_ID="cykt-399216"
-REGION="us-west1"
-SERVICE="khmer-love-translator"
-IMAGE="gcr.io/$PROJECT_ID/$SERVICE"
+CID=07325b73-5ede-4ed7-b6b4-f6b1129f65b4
+REG=rg.fr-par.scw.cloud/chetana-apps/khmer-love
+URL=https://kh.chetana.fr
+TAG=$(git rev-list --count HEAD)
 
-# Load GEMINI_API_KEY from .env if present
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-fi
+echo "→ build $REG:$TAG"
+docker --context default build -t "$REG:$TAG" .
+echo "→ push"
+docker --context default push "$REG:$TAG"
+echo "→ deploy Scaleway (préserve env/secrets : on ne passe QUE image=)"
+scw container container update "$CID" image="$REG:$TAG" >/dev/null
+scw container container deploy "$CID" >/dev/null
 
-if [ -z "$GEMINI_API_KEY" ]; then
-  echo "❌ GEMINI_API_KEY is not set. Add it to .env or export it."
-  exit 1
-fi
-
-echo "🔨 Building Docker image..."
-gcloud builds submit \
-  --tag "$IMAGE" \
-  --substitutions "_GEMINI_API_KEY=$GEMINI_API_KEY" \
-  --project "$PROJECT_ID"
-
-# Note: Cloud Build substitutions don't pass build args directly.
-# We use a cloudbuild.yaml for that. See below.
-echo "🚀 Deploying to Cloud Run..."
-gcloud run deploy "$SERVICE" \
-  --image "$IMAGE" \
-  --region "$REGION" \
-  --allow-unauthenticated \
-  --project "$PROJECT_ID"
-
-echo "✅ Done! Service URL:"
-gcloud run services describe "$SERVICE" \
-  --region "$REGION" \
-  --project "$PROJECT_ID" \
-  --format="value(status.url)"
+st=""
+for i in $(seq 1 40); do
+  st=$(scw container container get "$CID" -o json | node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(0)).status)')
+  [ "$st" = "ready" ] && break
+  sleep 6
+done
+echo "→ container : $st"
+code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/" --max-time 20)
+echo "→ $URL : $code"
+echo "✅ khmer-love déployé ($REG:$TAG)"
